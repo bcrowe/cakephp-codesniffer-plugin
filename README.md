@@ -1,6 +1,7 @@
 # CakePHP CodeSniffer Plugin
 
 Author: Mark Scherer
+
 License: MIT
 
 ## Requirements
@@ -9,7 +10,7 @@ CakePHP v2.x
 
 ## How to use
 
-1. Download the plugin and place it at `APP/Plugin/CodeSniffer` (or ROOT/Plugin/ folder).
+1. Download the plugin and place it at `APP/Plugin/CodeSniffer` (or ROOT/plugins/ folder).
 
    ```bash
    cd APP/Plugin
@@ -20,7 +21,7 @@ CakePHP v2.x
 
    ```php
    <?php
-   CakePlugin::load('CodeSniffer', array('bootstrap' => true));
+   CakePlugin::load('CodeSniffer'); // or just CakePlugin::loadAll();
    ```
 
 3. That's all! CodeSniffer is ready for use.
