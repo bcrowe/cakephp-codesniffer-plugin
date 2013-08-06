@@ -59,6 +59,9 @@ You can overwrite the default at runtime or globally using your APP configs:
 	// Use our own standards "MyCakePHP" as default
 	Configure::write('CodeSniffer.standard', 'MyCakePHP');
 
+	// A "Custom" standard that is somewhere else on your file system
+	Configure::write('CodeSniffer.standard', '/absolute/path/to/Custom');
+
 ### Tokenizer
 
 You can use the tokenizer command to debug your PHP files. This can be very useful when writing

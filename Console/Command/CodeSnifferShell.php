@@ -64,12 +64,18 @@ class CodeSnifferShell extends AppShell {
 	 * @return void
 	 */
 	public function run() {
+		$path = null;
 		if (!empty($this->args)) {
 			$path = $this->args[0];
-			$path = realpath($path);
 		}
-		if (empty($path)) {
+		if (!empty($this->params['plugin'])) {
+			$path = CakePlugin::path(Inflector::camelize($this->params['plugin'])) . $path;
+		} elseif (empty($path)) {
 			$path = APP;
+		}
+		$path = realpath($path);
+		if (empty($path)) {
+			$this->error('Please provide a valid path.');
 		}
 
 		$_SERVER['argv'] = array();
@@ -86,10 +92,13 @@ class CodeSnifferShell extends AppShell {
 		}
 		if ($this->params['verbose']) {
 			$_SERVER['argv'][] = '-v';
+			$_SERVER['argv'][] = '-s';
 		}
 		//$_SERVER['argv'][] = '--error-severity=1';
 		//$_SERVER['argv'][] = '--warning-severity=1';
-		//$_SERVER['argv'][] = '--config-show';
+		if ($this->params['ext']) {
+			$_SERVER['argv'][] = '--extensions=' . $this->params['ext'];
+		}
 		$_SERVER['argv'][] = $path;
 
 		$_SERVER['argc'] = count($_SERVER['argv']);
@@ -392,6 +401,16 @@ class CodeSnifferShell extends AppShell {
 			'standard' => array(
 				'short' => 's',
 				'description' => 'Standard to use (defaults to CakePHP)',
+				'default' => ''
+			),
+			'plugin' => array(
+				'short' => 'p',
+				'description' => 'Plugin to use (combined with path subpath of this plugin).',
+				'default' => ''
+			),
+			'ext' => array(
+				'short' => 'e',
+				'description' => 'Extensions to check (comma separated list).',
 				'default' => ''
 			),
 		))
