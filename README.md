@@ -37,7 +37,7 @@ If you do not provide a path, it will automatically run the sniffer for your APP
 By default it uses the CakePHP rules.
 You can overwrite the default at runtime or globally using your APP configs:
 
-   Configure::write('CodeSniffer.standard', 'MyCakePHP');
+    Configure::write('CodeSniffer.standard', 'MyCakePHP');
 
 ### Tokenizer
 
