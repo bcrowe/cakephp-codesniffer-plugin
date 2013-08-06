@@ -32,6 +32,13 @@ CakePHP v2.x
 
 If you do not provide a path, it will automatically run the sniffer for your APP path.
 
+Note that it will also create a full debug log file in your TMP folder. This is useful if there are a lot
+of errors and warnings.
+
+If you want to display a list of available standards, use the "standards" command:
+
+	cake CodeSniffer.Codesniffer standards
+
 ### Settings/Options
 
 By default it uses the CakePHP rules.
