@@ -37,7 +37,8 @@ If you do not provide a path, it will automatically run the sniffer for your APP
 By default it uses the CakePHP rules.
 You can overwrite the default at runtime or globally using your APP configs:
 
-    Configure::write('CodeSniffer.standard', 'MyCakePHP');
+	// Use our own standards "MyCakePHP" as default
+	Configure::write('CodeSniffer.standard', 'MyCakePHP');
 
 ### Tokenizer
 
@@ -45,7 +46,7 @@ You can use the tokenizer command to debug your PHP files. This can be very usef
 your own rules. You can output just the token name list, but it is usually better to use the verbose
 output:
 
-    cake CodeSniffer.Codesniffer tokenize /path/to/file.ext -v
+	cake CodeSniffer.Codesniffer tokenize /path/to/file.ext -v
 
 This will create a file `/path/to/file.ext.token` with all token names added in comment lines.
 
