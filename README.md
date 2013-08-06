@@ -36,6 +36,14 @@ CakePHP v2.x
 
 If you do not provide a path, it will automatically run the sniffer for your APP path.
 
+You can also quickly sniff one of your plugins:
+
+	cake CodeSniffer.CodeSniffer run -p Tools
+
+And by providing a path, as well, it will use it as sub path of your plugin:
+
+	cake CodeSniffer.CodeSniffer run Model -p Tools
+
 Note that it will also create a full debug log file in your TMP folder. This is useful if there are a lot
 of errors and warnings.
 
