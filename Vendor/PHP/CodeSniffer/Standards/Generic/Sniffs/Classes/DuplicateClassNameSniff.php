@@ -20,7 +20,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Generic_Sniffs_Classes_DuplicateClassNameSniff implements PHP_CodeSniffer_Sniff
@@ -78,7 +78,11 @@ class Generic_Sniffs_Classes_DuplicateClassNameSniff implements PHP_CodeSniffer_
             // Keep track of what namespace we are in.
             if ($tokens[$stackPtr]['code'] === T_NAMESPACE) {
                 $nsEnd = $phpcsFile->findNext(
-                    array(T_NS_SEPARATOR, T_STRING, T_WHITESPACE),
+                    array(
+                     T_NS_SEPARATOR,
+                     T_STRING,
+                     T_WHITESPACE,
+                    ),
                     ($stackPtr + 1),
                     null,
                     true
@@ -108,9 +112,9 @@ class Generic_Sniffs_Classes_DuplicateClassNameSniff implements PHP_CodeSniffer_
                     $phpcsFile->addWarning($error, $stackPtr, 'Found', $data);
                 } else {
                     $this->foundClasses[$compareName] = array(
-                                                        'file' => $phpcsFile->getFilename(),
-                                                        'line' => $tokens[$stackPtr]['line'],
-                                                       );
+                                                         'file' => $phpcsFile->getFilename(),
+                                                         'line' => $tokens[$stackPtr]['line'],
+                                                        );
                 }
             }
 

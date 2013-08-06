@@ -30,7 +30,7 @@ if (is_file(dirname(__FILE__).'/../CodeSniffer.php') === true) {
  * @copyright 2009 SQLI <www.sqli.com>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_Reporting
@@ -143,7 +143,11 @@ class PHP_CodeSniffer_Reporting
                 }
 
                 if ($output === null) {
-                    $output = getcwd().'/phpcs-'.$report.'.tmp';
+                    if ($cliValues['reportFile'] !== null) {
+                        $output = $cliValues['reportFile'];
+                    } else {
+                        $output = getcwd().'/phpcs-'.$report.'.tmp';
+                    }
                 }
 
                 file_put_contents($output, $generatedReport, $flags);

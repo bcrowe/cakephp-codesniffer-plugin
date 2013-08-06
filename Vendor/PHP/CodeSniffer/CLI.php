@@ -26,7 +26,7 @@ if (is_file(dirname(__FILE__).'/../CodeSniffer.php') === true) {
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_CLI
@@ -307,7 +307,7 @@ class PHP_CodeSniffer_CLI
             exit(0);
             break;
         case 'version':
-            echo 'PHP_CodeSniffer version 1.5.0RC2 (beta) ';
+            echo 'PHP_CodeSniffer version 1.5.0RC3 (beta) ';
             echo 'by Squiz Pty Ltd. (http://www.squiz.com.au)'.PHP_EOL;
             exit(0);
             break;
@@ -406,19 +406,20 @@ class PHP_CodeSniffer_CLI
                     $output = null;
                 }
 
-                $validReports     = array(
-                                     'full',
-                                     'xml',
-                                     'checkstyle',
-                                     'csv',
-                                     'emacs',
-                                     'notifysend',
-                                     'source',
-                                     'summary',
-                                     'svnblame',
-                                     'gitblame',
-                                     'hgblame',
-                                    );
+                $validReports = array(
+                                 'full',
+                                 'xml',
+                                 'json',
+                                 'checkstyle',
+                                 'csv',
+                                 'emacs',
+                                 'notifysend',
+                                 'source',
+                                 'summary',
+                                 'svnblame',
+                                 'gitblame',
+                                 'hgblame',
+                                );
 
                 if (in_array($report, $validReports) === false) {
                     echo 'ERROR: Report type "'.$report.'" not known.'.PHP_EOL;
@@ -774,7 +775,7 @@ class PHP_CodeSniffer_CLI
         ob_start();
 
         foreach ($sniffs as $sniff) {
-            $parts = explode('_', $sniff);
+            $parts = explode('_', str_replace('\\', '_', $sniff));
             if ($lastStandard === '') {
                 $lastStandard = $parts[0];
             }
@@ -841,8 +842,8 @@ class PHP_CodeSniffer_CLI
         echo '        <tabWidth>    The number of spaces each tab represents'.PHP_EOL;
         echo '        <generator>   The name of a doc generator to use'.PHP_EOL;
         echo '                      (forces doc generation instead of checking)'.PHP_EOL;
-        echo '        <report>      Print either the "full", "xml", "checkstyle", "csv", "emacs"'.PHP_EOL;
-        echo '                      "source", "summary", "svnblame", "gitblame", "hgblame" or'.PHP_EOL;
+        echo '        <report>      Print either the "full", "xml", "checkstyle", "csv", "json"'.PHP_EOL;
+        echo '                      "emacs", "source", "summary", "svnblame", "gitblame", "hgblame" or'.PHP_EOL;
         echo '                      "notifysend" report'.PHP_EOL;
         echo '                      (the "full" report is printed by default)'.PHP_EOL;
         echo '        <reportfile>  Write the report to the specified file path'.PHP_EOL;

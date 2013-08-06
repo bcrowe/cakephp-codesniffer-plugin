@@ -27,7 +27,7 @@ if (class_exists('PEAR_Sniffs_Classes_ClassDeclarationSniff', true) === false) {
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PSR2_Sniffs_Classes_ClassDeclarationSniff extends PEAR_Sniffs_Classes_ClassDeclarationSniff
@@ -89,10 +89,19 @@ class PSR2_Sniffs_Classes_ClassDeclarationSniff extends PEAR_Sniffs_Classes_Clas
             }
         }//end if
 
-        // We'll need the indent of the class/interface keyword for later.
+        // We'll need the indent of the class/interface declaration for later.
         $classIndent = 0;
-        if (strpos($tokens[($stackPtr - 1)]['content'], $phpcsFile->eolChar) === false) {
-            $classIndent = strlen($tokens[($stackPtr - 1)]['content']);
+        for ($i = ($stackPtr - 1); $i > 0; $i--) {
+            if ($tokens[$i]['line'] === $tokens[$stackPtr]['line']) {
+                continue;
+            }
+
+            // We changed lines.
+            if ($tokens[($i + 1)]['code'] === T_WHITESPACE) {
+                $classIndent = strlen($tokens[($i + 1)]['content']);
+            }
+
+            break;
         }
 
         $keyword      = $stackPtr;
@@ -161,8 +170,12 @@ class PSR2_Sniffs_Classes_ClassDeclarationSniff extends PEAR_Sniffs_Classes_Clas
             }
         }
 
+        $find = array(
+                 T_STRING,
+                 T_IMPLEMENTS,
+                );
+
         $classNames = array();
-        $find       = array(T_STRING, T_IMPLEMENTS);
         $nextClass  = $phpcsFile->findNext($find, ($className + 2), ($openingBrace - 1));
         while ($nextClass !== false) {
             $classNames[] = $nextClass;
@@ -183,7 +196,10 @@ class PSR2_Sniffs_Classes_ClassDeclarationSniff extends PEAR_Sniffs_Classes_Clas
                 || $tokens[($className - 2)]['code'] !== T_STRING)
             ) {
                 $prev = $phpcsFile->findPrevious(
-                    array(T_NS_SEPARATOR, T_WHITESPACE),
+                    array(
+                     T_NS_SEPARATOR,
+                     T_WHITESPACE,
+                    ),
                     ($className - 1),
                     $implements,
                     true
@@ -200,7 +216,7 @@ class PSR2_Sniffs_Classes_ClassDeclarationSniff extends PEAR_Sniffs_Classes_Clas
                         $error = 'Expected %s spaces before interface name; %s found';
                         $data  = array(
                                   $expected,
-                                  $found
+                                  $found,
                                  );
                         $phpcsFile->addError($error, $className, 'InterfaceWrongIndent', $data);
                     }
@@ -272,9 +288,11 @@ class PSR2_Sniffs_Classes_ClassDeclarationSniff extends PEAR_Sniffs_Classes_Clas
         $tokens = $phpcsFile->getTokens();
 
         // Check that the closing brace comes right after the code body.
-        $closeBrace = $tokens[$stackPtr]['scope_closer'];
+        $closeBrace  = $tokens[$stackPtr]['scope_closer'];
         $prevContent = $phpcsFile->findPrevious(T_WHITESPACE, ($closeBrace - 1), null, true);
-        if ($tokens[$prevContent]['line'] !== ($tokens[$closeBrace]['line'] - 1)) {
+        if ($prevContent !== $tokens[$stackPtr]['scope_opener']
+            && $tokens[$prevContent]['line'] !== ($tokens[$closeBrace]['line'] - 1)
+        ) {
             $error = 'The closing brace for the %s must go on the next line after the body';
             $data  = array($tokens[$stackPtr]['content']);
             $phpcsFile->addError($error, $closeBrace, 'CloseBraceAfterBody', $data);

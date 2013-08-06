@@ -23,7 +23,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PSR2_Tests_Classes_ClassDeclarationUnitTest extends AbstractSniffUnitTest
@@ -59,6 +59,7 @@ class PSR2_Tests_Classes_ClassDeclarationUnitTest extends AbstractSniffUnitTest
                 44 => 1,
                 45 => 1,
                 63 => 1,
+                95 => 1,
                );
 
     }//end getErrorList()

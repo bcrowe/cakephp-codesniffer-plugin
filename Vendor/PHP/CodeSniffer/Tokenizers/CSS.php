@@ -24,7 +24,7 @@ if (class_exists('PHP_CodeSniffer_Tokenizers_PHP', true) === false) {
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_Tokenizers_CSS extends PHP_CodeSniffer_Tokenizers_PHP
@@ -114,6 +114,24 @@ class PHP_CodeSniffer_Tokenizers_CSS extends PHP_CodeSniffer_Tokenizers_PHP
                 }
             }//end if
 
+            if ($token['code'] === T_GOTO_LABEL) {
+                // Convert these back to T_STRING folowed by T_COLON so we can
+                // more easily process style definitions.
+                $finalTokens[$newStackPtr] = array(
+                                              'type'    => 'T_STRING',
+                                              'code'    => T_STRING,
+                                              'content' => substr($token['content'], 0, -1),
+                                             );
+                $newStackPtr++;
+                $finalTokens[$newStackPtr] = array(
+                                              'type'    => 'T_COLON',
+                                              'code'    => T_COLON,
+                                              'content' => ':',
+                                             );
+                $newStackPtr++;
+                continue;
+            }
+
             if ($token['code'] === T_FUNCTION) {
                 // There are no functions in CSS, so convert this to a string.
                 $finalTokens[$newStackPtr] = array(
@@ -164,7 +182,9 @@ class PHP_CodeSniffer_Tokenizers_CSS extends PHP_CodeSniffer_Tokenizers_PHP
 
                     // If the first content looks like a colour and not a class
                     // definition, join the tokens together.
-                    if (preg_match('/^[ABCDEF0-9]+$/i', $firstContent) === 1) {
+                    if (preg_match('/^[ABCDEF0-9]+$/i', $firstContent) === 1
+                        && $commentTokens[1]['content'] !== '-'
+                    ) {
                         array_shift($commentTokens);
                         // Work out what we trimmed off above and remember to re-add it.
                         $trimmed = substr($token['content'], 0, (strlen($token['content']) - strlen($content)));

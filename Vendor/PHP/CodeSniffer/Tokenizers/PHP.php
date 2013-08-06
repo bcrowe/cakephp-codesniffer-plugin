@@ -20,7 +20,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_Tokenizers_PHP
@@ -431,6 +431,36 @@ class PHP_CodeSniffer_Tokenizers_PHP
 
                 // Continue, as we're done with this token.
                 continue;
+            }//end if
+
+            /*
+                PHP doesn't assign a token to goto labels, so we have to.
+                These are just string tokens with a single colon after them. Double
+                colons are already tokenized and so don't interfere with this check.
+                But we do have to account for CASE statements, that look just like
+                goto labels.
+            */
+
+            if ($tokenIsArray === true
+                && $token[0] === T_STRING
+                && $tokens[($stackPtr + 1)] === ':'
+            ) {
+                for ($x = ($newStackPtr - 2); $x > 0; $x--) {
+                    if (in_array($finalTokens[$x]['code'], PHP_CodeSniffer_Tokens::$emptyTokens) === false) {
+                        break;
+                    }
+                }
+
+                if ($finalTokens[$x]['code'] !== T_CASE) {
+                    $finalTokens[$newStackPtr] = array(
+                                                  'content' => $token[1].':',
+                                                  'code'    => T_GOTO_LABEL,
+                                                  'type'    => 'T_GOTO_LABEL',
+                                                 );
+                    $newStackPtr++;
+                    $stackPtr++;
+                    continue;
+                }
             }//end if
 
             /*

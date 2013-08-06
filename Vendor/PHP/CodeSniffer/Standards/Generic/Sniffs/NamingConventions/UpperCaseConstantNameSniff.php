@@ -24,7 +24,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Generic_Sniffs_NamingConventions_UpperCaseConstantNameSniff implements PHP_CodeSniffer_Sniff
@@ -72,7 +72,13 @@ class Generic_Sniffs_NamingConventions_UpperCaseConstantNameSniff implements PHP
         $openBracket = $phpcsFile->findNext(T_WHITESPACE, ($stackPtr + 1), null, true);
         if ($tokens[$openBracket]['code'] !== T_OPEN_PARENTHESIS) {
             $functionKeyword = $phpcsFile->findPrevious(
-                array(T_WHITESPACE, T_COMMA, T_COMMENT, T_STRING, T_NS_SEPARATOR),
+                array(
+                 T_WHITESPACE,
+                 T_COMMA,
+                 T_COMMENT,
+                 T_STRING,
+                 T_NS_SEPARATOR,
+                ),
                 ($stackPtr - 1),
                 null,
                 true
@@ -126,6 +132,11 @@ class Generic_Sniffs_NamingConventions_UpperCaseConstantNameSniff implements PHP
 
             // Is this an insteadof name?
             if ($tokens[$nextPtr]['code'] === T_INSTEADOF) {
+                return;
+            }
+
+            // Is this an as name?
+            if ($tokens[$nextPtr]['code'] === T_AS) {
                 return;
             }
 

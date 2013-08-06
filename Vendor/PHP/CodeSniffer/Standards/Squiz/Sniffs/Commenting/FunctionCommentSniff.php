@@ -44,7 +44,7 @@ if (class_exists('PHP_CodeSniffer_CommentParser_FunctionCommentParser', true) ==
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sniff
@@ -420,9 +420,21 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
                     // no return statement in the function.
                     if ($content === 'void') {
                         if (isset($tokens[$this->_functionToken]['scope_closer']) === true) {
-                            $endToken    = $tokens[$this->_functionToken]['scope_closer'];
-                            $returnToken = $this->currentFile->findNext(T_RETURN, $this->_functionToken, $endToken);
-                            if ($returnToken !== false) {
+                            $endToken = $tokens[$this->_functionToken]['scope_closer'];
+
+                            $tokens = $this->currentFile->getTokens();
+                            for ($returnToken = $this->_functionToken; $returnToken < $endToken; $returnToken++) {
+                                if ($tokens[$returnToken]['code'] === T_CLOSURE) {
+                                    $returnToken = $tokens[$returnToken]['scope_closer'];
+                                    continue;
+                                }
+
+                                if ($tokens[$returnToken]['code'] === T_RETURN) {
+                                    break;
+                                }
+                            }
+
+                            if ($returnToken !== $endToken) {
                                 // If the function is not returning anything, just
                                 // exiting, then there is no problem.
                                 $semicolon = $this->currentFile->findNext(T_WHITESPACE, ($returnToken + 1), null, true);
@@ -693,9 +705,9 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
                     if ($realName !== $paramName) {
                         $code = 'ParamNameNoMatch';
                         $data = array(
-                                    $paramName,
-                                    $realName,
-                                    $pos,
+                                 $paramName,
+                                 $realName,
+                                 $pos,
                                 );
 
                         $error  = 'Doc comment for var %s does not match ';

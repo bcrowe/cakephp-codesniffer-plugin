@@ -26,7 +26,7 @@
  * @copyright 2009 SQLI <www.sqli.com>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_Reports_Xml implements PHP_CodeSniffer_Report
@@ -116,7 +116,7 @@ class PHP_CodeSniffer_Reports_Xml implements PHP_CodeSniffer_Report
         $toScreen=true
     ) {
         echo '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL;
-        echo '<phpcs version="1.5.0RC2">'.PHP_EOL;
+        echo '<phpcs version="1.5.0RC3">'.PHP_EOL;
         echo $cachedData;
         echo '</phpcs>'.PHP_EOL;
 

@@ -29,7 +29,7 @@
  * @copyright 2012 Christian Weiske
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_Reports_Notifysend implements PHP_CodeSniffer_Report
@@ -246,6 +246,7 @@ class PHP_CodeSniffer_Reports_Notifysend implements PHP_CodeSniffer_Report
     {
         $cmd  = escapeshellcmd($this->path);
         $cmd .= ' --category dev.validate';
+        $cmd .= ' -h int:transient:1';
         $cmd .= ' -t '.(int) $this->timeout;
         if (version_compare($this->version, '0.7.3', '>=') === true) {
             $cmd .= ' -a phpcs';

@@ -36,10 +36,6 @@ if (interface_exists('PHP_CodeSniffer_Sniff', true) === false) {
     throw new PHP_CodeSniffer_Exception('Interface PHP_CodeSniffer_Sniff not found');
 }
 
-if (interface_exists('PHP_CodeSniffer_MultiFileSniff', true) === false) {
-    throw new PHP_CodeSniffer_Exception('Interface PHP_CodeSniffer_MultiFileSniff not found');
-}
-
 /**
  * PHP_CodeSniffer tokenises PHP code and detects violations of a
  * defined set of coding standards.
@@ -172,6 +168,7 @@ class PHP_CodeSniffer
                                    'mixed',
                                    'object',
                                    'string',
+                                   'resource',
                                   );
 
 
@@ -263,7 +260,7 @@ class PHP_CodeSniffer
             // Check standard file locations based on the loaded rulesets.
             foreach (self::$rulesetDirs as $rulesetDir) {
                 if (is_file(dirname($rulesetDir).'/'.$path) === true) {
-                    include dirname($rulesetDir).'/'.$path;
+                    include_once dirname($rulesetDir).'/'.$path;
                     return;
                 }
             }
@@ -402,6 +399,10 @@ class PHP_CodeSniffer
             $installed = $this->getInstalledStandardPath($standard);
             if ($installed !== null) {
                 $standard = $installed;
+            } else if (is_dir($standard) === true
+                && is_file(realpath($standard.'/ruleset.xml')) === true
+            ) {
+                $standard = realpath($standard.'/ruleset.xml');
             }
 
             if (PHP_CODESNIFFER_VERBOSITY === 1) {
@@ -633,7 +634,14 @@ class PHP_CodeSniffer
     {
         $sniffs = array();
 
-        $di = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory));
+        if (defined('RecursiveDirectoryIterator::FOLLOW_SYMLINKS') === true) {
+            $rdi = new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::FOLLOW_SYMLINKS);
+        } else {
+            $rdi = new RecursiveDirectoryIterator($directory);
+        }
+
+        $di = new RecursiveIteratorIterator($rdi, 0, RecursiveIteratorIterator::CATCH_GET_CHILD);
+
         foreach ($di as $file) {
             $fileName = $file->getFilename();
 
@@ -936,6 +944,14 @@ class PHP_CodeSniffer
             $className = substr($className, 0, -4);
             $className = str_replace(DIRECTORY_SEPARATOR, '_', $className);
 
+            // If they have specified a list of sniffs to restrict to, check
+            // to see if this sniff is allowed.
+            if (empty($restrictions) === false
+                && in_array(strtolower($className), $restrictions) === false
+            ) {
+                continue;
+            }
+
             include_once $file;
 
             // Support the use of PHP namespaces. If the class name we included
@@ -944,14 +960,6 @@ class PHP_CodeSniffer
             $classNameNS = str_replace('_', '\\', $className);
             if (class_exists($classNameNS, false) === true) {
                 $className = $classNameNS;
-            }
-
-            // If they have specified a list of sniffs to restrict to, check
-            // to see if this sniff is allowed.
-            if (empty($restrictions) === false
-                && in_array(strtolower($className), $restrictions) === false
-            ) {
-                continue;
             }
 
             $listeners[$className] = $className;
@@ -986,8 +994,8 @@ class PHP_CodeSniffer
                 $parts = explode('\\', $listenerClass);
             }
 
-            $code  = $parts[0].'.'.$parts[2].'.'.$parts[3];
-            $code  = substr($code, 0, -5);
+            $code = $parts[0].'.'.$parts[2].'.'.$parts[3];
+            $code = substr($code, 0, -5);
 
             $this->listeners[$listenerClass] = new $listenerClass();
 
@@ -1037,7 +1045,7 @@ class PHP_CodeSniffer
      *
      * @return void
      */
-    public function setSniffProperty($listenerClass, $name, $value) 
+    public function setSniffProperty($listenerClass, $name, $value)
     {
         // Setting a property for a sniff we are not using.
         if (isset($this->listeners[$listenerClass]) === false) {
@@ -1083,7 +1091,11 @@ class PHP_CodeSniffer
                 if ($local === true) {
                     $di = new DirectoryIterator($path);
                 } else {
-                    $di = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($path));
+                    $di = new RecursiveIteratorIterator(
+                        new RecursiveDirectoryIterator($path),
+                        0,
+                        RecursiveIteratorIterator::CATCH_GET_CHILD
+                    );
                 }
 
                 foreach ($di as $file) {
@@ -1489,14 +1501,14 @@ class PHP_CodeSniffer
                 break;
             case T_CURLY_OPEN:
                 $newToken = array(
-                             'code'    => T_OPEN_CURLY_BRACKET,
-                             'type'    => 'T_OPEN_CURLY_BRACKET',
+                             'code' => T_OPEN_CURLY_BRACKET,
+                             'type' => 'T_OPEN_CURLY_BRACKET',
                             );
                 break;
             default:
                 $newToken = array(
-                             'code'    => $token[0],
-                             'type'    => token_name($token[0]),
+                             'code' => $token[0],
+                             'type' => token_name($token[0]),
                             );
                 break;
             }//end switch
@@ -1688,16 +1700,23 @@ class PHP_CodeSniffer
     ) {
         // Check the first character first.
         if ($classFormat === false) {
+            $legalFirstChar = '';
             if ($public === false) {
-                $legalFirstChar = '[_][a-z]';
+                $legalFirstChar = '[_]';
+            }
+
+            if ($strict === false) {
+                // Can either start with a lowercase letter, or multiple uppercase
+                // in a row, representing an acronym.
+                $legalFirstChar .= '([A-Z]{2,}|[a-z])';
             } else {
-                $legalFirstChar = '[a-z]';
+                $legalFirstChar .= '[a-z]';
             }
         } else {
             $legalFirstChar = '[A-Z]';
         }
 
-        if (preg_match("|^$legalFirstChar|", $string) === 0) {
+        if (preg_match("/^$legalFirstChar/", $string) === 0) {
             return false;
         }
 

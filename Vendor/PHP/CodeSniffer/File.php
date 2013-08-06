@@ -111,7 +111,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_File
@@ -463,7 +463,7 @@ class PHP_CodeSniffer_File
                 }
 
                 // If the file path matches one of our ignore patterns, skip it.
-                $parts = explode('_', $class);
+                $parts = explode('_', str_replace('\\', '_', $class));
                 if (isset($parts[3]) === true) {
                     $source   = $parts[0].'.'.$parts[2].'.'.substr($parts[3], 0, -5);
                     $patterns = $this->phpcs->getIgnorePatterns($source);
@@ -730,7 +730,7 @@ class PHP_CodeSniffer_File
             // Any internal message.
             $sniff = $code;
         } else {
-            $parts = explode('_', $this->_activeListener);
+            $parts = explode('_', str_replace('\\', '_', $this->_activeListener));
             if (isset($parts[3]) === true) {
                 $sniff = $parts[0].'.'.$parts[2].'.'.$parts[3];
 
@@ -851,7 +851,7 @@ class PHP_CodeSniffer_File
             // Any internal message.
             $sniff = $code;
         } else {
-            $parts = explode('_', $this->_activeListener);
+            $parts = explode('_', str_replace('\\', '_', $this->_activeListener));
             if (isset($parts[3]) === true) {
                 $sniff = $parts[0].'.'.$parts[2].'.'.$parts[3];
 
@@ -1491,10 +1491,11 @@ class PHP_CodeSniffer_File
             // scope tokens. If an IF statement below this one has an opener but no
             // keyword, the opener will be incorrectly assigned to this IF statement.
             // E.g., if (1) 1; 1 ? (1 ? 1 : 1) : 1;
-            if ($currType === T_IF && $opener === null && $tokens[$i]['code'] === T_SEMICOLON) {
+            if (($currType === T_IF || $currType === T_ELSE) && $opener === null && $tokens[$i]['code'] === T_SEMICOLON) {
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
+                    $type = $tokens[$stackPtr]['type'];
                     echo str_repeat("\t", $depth);
-                    echo "=> Found semicolon before scope opener for $stackPtr (T_IF), bailing".PHP_EOL;
+                    echo "=> Found semicolon before scope opener for $stackPtr ($type), bailing".PHP_EOL;
                 }
 
                 return $i;

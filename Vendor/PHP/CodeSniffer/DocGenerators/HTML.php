@@ -30,7 +30,7 @@ if (class_exists('PHP_CodeSniffer_DocGenerators_Generator', true) === false) {
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC2
+ * @version   Release: 1.5.0RC3
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_DocGenerators_HTML extends PHP_CodeSniffer_DocGenerators_Generator
@@ -191,7 +191,7 @@ class PHP_CodeSniffer_DocGenerators_HTML extends PHP_CodeSniffer_DocGenerators_G
         error_reporting(E_ALL);
         echo '  <div class="tag-line">';
         echo 'Documentation generated on '.date('r');
-        echo ' by <a href="http://pear.php.net/package/PHP_CodeSniffer">PHP_CodeSniffer 1.5.0RC2</a>';
+        echo ' by <a href="http://pear.php.net/package/PHP_CodeSniffer">PHP_CodeSniffer 1.5.0RC3</a>';
         echo '</div>'.PHP_EOL;
         error_reporting(E_ALL | E_STRICT);
 
@@ -261,6 +261,7 @@ class PHP_CodeSniffer_DocGenerators_HTML extends PHP_CodeSniffer_DocGenerators_G
 
         $firstTitle = $codeBlocks->item(0)->getAttribute('title');
         $first = trim($codeBlocks->item(0)->nodeValue);
+        $first = str_replace('<?php', '&lt;?php', $first);
         $first = str_replace("\n", '</br>', $first);
         $first = str_replace(' ', '&nbsp;', $first);
         $first = str_replace('<em>', '<span class="code-comparison-highlight">', $first);
@@ -268,6 +269,7 @@ class PHP_CodeSniffer_DocGenerators_HTML extends PHP_CodeSniffer_DocGenerators_G
 
         $secondTitle = $codeBlocks->item(1)->getAttribute('title');
         $second = trim($codeBlocks->item(1)->nodeValue);
+        $second = str_replace('<?php', '&lt;?php', $second);
         $second = str_replace("\n", '</br>', $second);
         $second = str_replace(' ', '&nbsp;', $second);
         $second = str_replace('<em>', '<span class="code-comparison-highlight">', $second);
