@@ -28,6 +28,13 @@ class MyCakePHP_Sniffs_WhiteSpace_CommaWhitespaceSniff implements PHP_CodeSniffe
 			$error = 'Missing space after comma';
 			$phpcsFile->addError($error, $next);
 		}
+
+		$previous = $phpcsFile->findPrevious(T_WHITESPACE, ($stackPtr - 1), null, true);
+
+		if ($tokens[$previous]['code'] !== T_WHITESPACE && ($previous !== $stackPtr - 1)) {
+			$error = 'Space before comma, expected none, though';
+			$phpcsFile->addError($error, $next);
+		}
 	}
 
 }
