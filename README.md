@@ -4,6 +4,10 @@ Author: Mark Scherer
 
 License: MIT
 
+This is quite helpful when creating new sniffer rules (using tokenizer command) or to quickly run
+your default standard sniffs against your CakePHP app. It also provides some good default values regarding
+default settings in general.
+
 ## Requirements
 
 CakePHP v2.x
@@ -71,7 +75,8 @@ You are free to stick to the official version using the "CakePHP" standard!
 
 ## TODOS
 
-Installing via composer or some more generic approach?
+Installing via composer or some more generic approach? This would avoid the hardwiring of PHPCS and the standards
+in this plugin.
 
 Also: The main goal is to push forward automated code correction using the CodeFixer.
 Using the same rules to "find" violations we should also be able to "fix" them right away in almost all cases.
