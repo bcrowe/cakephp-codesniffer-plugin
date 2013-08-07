@@ -31,6 +31,7 @@
 	<rule ref="CakePHP.ControlStructures.WhileStructures"/>
 
 	<rule ref="Zend.Files.ClosingTag"/>
+	<rule ref="MyCakePHP.Files.LineEndings"/>
 
 	<rule ref="Generic.Formatting.DisallowMultipleStatements"/>
 	<rule ref="Generic.Formatting.NoSpaceAfterCast"/>
