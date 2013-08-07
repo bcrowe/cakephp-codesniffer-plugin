@@ -74,9 +74,6 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 
 ### MyCakePHP improvements (optional)
 
-* ELSE IF vs. ELSEIF detection (now in CakePHP)
-* Brackets required for if/elseif/else (now in CakePHP)
-* Missing whitespace before and after commas detected (now in CakePHP)
 * COMMENTS on correct indentation level (with its code)
 * Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example)
 
@@ -85,6 +82,10 @@ For details see the ruleset.xml in the `Standards` dir.
 Note: The "correct" indentation is APP and plugin specific for me. This is the only exception from the official CakePHP
 standards and applies to all my (non core) code.
 You are free to stick to the official version using the "CakePHP" standard!
+
+### MyCakePHPCore improvements (optional)
+
+* Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example)
 
 ## TODOS
 
