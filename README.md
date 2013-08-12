@@ -81,8 +81,8 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 
 * Doc blocks / comments on correct indentation level (as their subsequent code).
 * Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example).
-* HACK to CakePHP and Squiz niffs to not falsely report whitespace issues in Windows.
 * ReturnEarly sniff to detect if a return statement is followed by an ELSE block.
+* Make CakePHP and Squiz niffs not falsely report whitespace issues in Windows (now in official standard).
 
 For details see the ruleset.xml in the `Standards` dir.
 
