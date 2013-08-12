@@ -51,6 +51,11 @@ If you want to display a list of available standards, use the "standards" comman
 
 	cake CodeSniffer.Codesniffer standards
 
+You can also check only a specific sniff:
+
+	cake CodeSniffer.CodeSniffer run /folder/to/check --standard=MyCakePHP
+		--sniffs=MyCakePHP.ControlStructures.ReturnEarly
+
 ### Settings/Options
 
 By default it uses the CakePHP rules.
@@ -77,6 +82,7 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 * Doc blocks / comments on correct indentation level (as their subsequent code).
 * Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example).
 * HACK to CakePHP and Squiz niffs to not falsely report whitespace issues in Windows.
+* ReturnEarly sniff to detect if a return statement is followed by an ELSE block.
 
 For details see the ruleset.xml in the `Standards` dir.
 

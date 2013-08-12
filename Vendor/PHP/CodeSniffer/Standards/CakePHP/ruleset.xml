@@ -4,7 +4,7 @@
 
  <exclude-pattern>\.git</exclude-pattern>
  <exclude-pattern>*/Config/*.ini.php</exclude-pattern>
- <exclude-pattern>*/tmp/</exclude-pattern>
+ <exclude-pattern>/*/tmp/</exclude-pattern>
 
  <rule ref="Squiz.Arrays.ArrayBracketSpacing"/>
 
@@ -45,7 +45,6 @@
 
  <rule ref="Generic.PHP.DeprecatedFunctions"/>
  <rule ref="Squiz.PHP.DisallowSizeFunctionsInLoops"/>
- <rule ref="Generic.PHP.DisallowShortOpenTag"/>
  <rule ref="Squiz.PHP.Eval"/>
  <rule ref="Generic.PHP.ForbiddenFunctions"/>
  <rule ref="Squiz.PHP.NonExecutableCode"/>

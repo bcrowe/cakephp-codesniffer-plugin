@@ -64,6 +64,9 @@ class CodeSnifferShell extends AppShell {
 	 * @return void
 	 */
 	public function run() {
+		// for larger PHP files we need some more memory
+		ini_set('memory_limit', '256M');
+
 		$path = null;
 		if (!empty($this->args)) {
 			$path = $this->args[0];
@@ -85,6 +88,9 @@ class CodeSnifferShell extends AppShell {
 			$standard = $this->params['standard'];
 		}
 		$_SERVER['argv'][] = '--standard=' . $standard;
+		if ($this->params['sniffs']) {
+			$_SERVER['argv'][] = '--sniffs=' . $this->params['sniffs'];
+		}
 
 		$_SERVER['argv'][] = '--report-file='.TMP.'phpcs.txt';
 		if (!$this->params['quiet']) {
@@ -411,6 +417,10 @@ class CodeSnifferShell extends AppShell {
 			'ext' => array(
 				'short' => 'e',
 				'description' => 'Extensions to check (comma separated list).',
+				'default' => ''
+			),
+			'sniffs' => array(
+				'description' => 'Checking files for specific sniffs only (comma separated list). E.g.: Generic.PHP.LowerCaseConstant,CakePHP.WhiteSpace.CommaSpacing',
 				'default' => ''
 			),
 		))

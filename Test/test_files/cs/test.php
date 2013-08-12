@@ -2,8 +2,7 @@
 
 class Foo {
 
-
-	public function bar() {
+	public function testElseif() {
 		if ($x) {
 
 		} else if ($y) {
@@ -15,4 +14,18 @@ class Foo {
 		}
 	}
 
+	public function testComma() {
+		explode(',','a,b,c');
+
+		explode(',' , 'a,b,c');
+	}
+
+	public function testControlStructures() {
+		if ($x)
+			foo();
+		elseif ($y)
+			bar();
+		else
+			foobar();
+	}
 }
