@@ -74,8 +74,9 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 
 ### MyCakePHP improvements (optional)
 
-* COMMENTS on correct indentation level (with its code)
-* Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example)
+* Doc blocks / comments on correct indentation level (as their subsequent code).
+* Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example).
+* HACK to CakePHP and Squiz niffs to not falsely report whitespace issues in Windows.
 
 For details see the ruleset.xml in the `Standards` dir.
 
