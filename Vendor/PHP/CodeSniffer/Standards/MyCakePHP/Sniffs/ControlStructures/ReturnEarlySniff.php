@@ -56,6 +56,11 @@ class MyCakePHP_Sniffs_ControlStructures_ReturnEarlySniff implements PHP_CodeSni
 		if (!$nextToken) {
 			return;
 		}
+		if ($tokens[$nextToken]['code'] === T_ELSEIF) {
+			$warning = 'The ELSEIF after an early return is not always necessary and can probably be simplified.';
+			$phpcsFile->addWarning($warning, $stackPtr, 'Warning');
+		}
+
 		if ($tokens[$nextToken]['code'] !== T_ELSE) {
 			return;
 		}

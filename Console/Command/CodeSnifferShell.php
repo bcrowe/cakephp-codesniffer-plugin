@@ -20,6 +20,8 @@ class CodeSnifferShell extends AppShell {
 
 	public $standard = 'CakePHP';
 
+	public $ext = 'php';
+
 	/**
 	 * Directory where CodeSniffer sniffs resides
 	 */
@@ -102,9 +104,17 @@ class CodeSnifferShell extends AppShell {
 		}
 		//$_SERVER['argv'][] = '--error-severity=1';
 		//$_SERVER['argv'][] = '--warning-severity=1';
-		if ($this->params['ext']) {
-			$_SERVER['argv'][] = '--extensions=' . $this->params['ext'];
+
+		$ext = $this->ext;
+		if ($this->params['ext'] === '*') {
+			$ext = '';
+		} elseif ($this->params['ext']) {
+			$ext = $this->params['ext'];
 		}
+		if ($ext) {
+			$_SERVER['argv'][] = '--extensions=' . $ext;
+		}
+
 		$_SERVER['argv'][] = $path;
 
 		$_SERVER['argc'] = count($_SERVER['argv']);
@@ -188,7 +198,7 @@ class CodeSnifferShell extends AppShell {
 	/**
 	 * CodeSnifferShell::_tokenize()
 	 *
-	 * @param int $row
+	 * @param integer $row
 	 * @param array $tokens
 	 * @return array
 	 */
@@ -416,7 +426,7 @@ class CodeSnifferShell extends AppShell {
 			),
 			'ext' => array(
 				'short' => 'e',
-				'description' => 'Extensions to check (comma separated list).',
+				'description' => 'Extensions to check (comma separated list). Defaults to php. Use * to allow all extensions.',
 				'default' => ''
 			),
 			'sniffs' => array(
