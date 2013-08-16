@@ -1,5 +1,16 @@
 <?php
 App::uses('AppShell', 'Console/Command');
+App::uses('FolderLib', 'Tools.Utility');
+App::uses('Xml', 'Utility');
+App::uses('HttpSocket', 'Network/Http');
+
+if (!defined('WINDOWS')) {
+	if (DS == '\\' || substr(PHP_OS, 0, 3) == 'WIN') {
+		define('WINDOWS', true);
+	} else {
+		define('WINDOWS', false);
+	}
+}
 
 if (strpos(get_include_path(), VENDORS) === false) {
 	set_include_path(get_include_path() . PATH_SEPARATOR . VENDORS);
@@ -32,18 +43,7 @@ class CodeSnifferShell extends AppShell {
 	 * + checks if CodeSniffer is installed and offer auto installation option.
 	 */
 	public function initialize() {
-		/*
-		if (empty($this->sniffsDir)) {
-			if (Configure::read('CodeSniffer.phar_dir') !== null) {
-				$this->sniffsDir = Configure::read('CodeSniffer.phar_dir');
-			} else {
-				$this->sniffsDir = dirname(dirname(dirname(__FILE__))).DS.'Vendor'.DS.'CodeSniffer'.DS;
-			}
-		}
 
-		$this->_checkCodeSnifferPhar();
-		$this->_checkCodeSnifferJSON();
-		*/
 		parent::initialize();
 	}
 
@@ -238,37 +238,6 @@ class CodeSnifferShell extends AppShell {
 	}
 
 	/**
-	 * Grabs the latest CodeSniffer.phar from http://getCodeSniffer.org/CodeSniffer.phar
-	 * Changeable at CakePHP configuration: CodeSniffer.phar_url
-	 *
-	 * @return void
-	 */
-	protected function _setup($version) {
-		$csUrl = 'http://download.pear.php.net/package/PHP_CodeSniffer-%s.tgz';
-		$csUrl = sprintf($csUrl, $version);
-
-		if (!is_writable($this->sniffsDir)) {
-			$this->error("$this->sniffsDir is not writable.");
-		}
-
-		$this->out('<info>Setting up CodeSniffer</info>');
-		$this->out("Downloading CodeSniffer from $csUrl...");
-
-		$content = file_get_contents($csUrl);
-		if ($content === false) {
-			$this->error("Download failed");
-		}
-
-		$save = file_put_contents($this->sniffsDir . 'CodeSniffer', $content);
-
-		if ($save === false) {
-			$this->error("Unable to save to {$this->sniffsDir}CodeSniffer.");
-		}
-
-		$this->out("<info>CodeSniffer installed and saved successfully.</info>");
-	}
-
-	/**
 	 * Convert options to string
 	 *
 	 * @param array $options Options array
@@ -316,11 +285,179 @@ class CodeSnifferShell extends AppShell {
 	/**
 	 * CodeSnifferShell::install()
 	 *
+	 * - download latest codesniffer (TODO)
+	 * - download latest CakePHP sniffs
+	 *
 	 * @return void
 	 */
 	public function install() {
+		if (!CakePlugin::loaded('Tools')) {
+			$this->error('This needs the Tools plugin');
+		}
+		$this->out('Downloading latest CodeSniffer package');
 		$feed = 'http://pear.php.net/feeds/pkg_php_codesniffer.rss';
+		$version = $this->_downloadCodeSniffer($feed);
 
+		$this->out('Downloading latest CakePHP rules');
+		//$file = 'https://github.com/cakephp/cakephp-codesniffer/archive/master.zip';
+		$file = 'https://codeload.github.com/cakephp/cakephp-codesniffer/zip/master';
+		$this->_downloadRules($file);
+
+		$target = CakePlugin::path('CodeSniffer') . 'Vendor' . DS . 'PHP' . DS;
+		$rulesTarget = $target . 'CodeSniffer' . DS . 'Standards' . DS . 'CakePHP' . DS;
+
+		$this->out('Installing CodeSniffer package');
+		$this->out('Manually copy the tmp files into your vendors folder!');
+		//$this->out('Installing PHP Codesniffer ' . $version);
+		//$this->_installCodeSniffer($target);
+
+		$this->out('Installing CakePHP rules');
+		$this->_installRules($rulesTarget);
+
+		//$this->out('Removing tmp folder', 1, Shell::VERBOSE);
+		//$Folder = new FolderLib(TMP . 'cs' . DS);
+		//$Folder->delete();
+		$this->out('Installation complete :)');
+	}
+
+	protected function _extract($file) {
+		chdir(dirname($file));
+
+		if (WINDOWS && empty($this->params['os']) || !empty($this->params['os']) && $this->params['os'] == 'w') {
+			$exePath = App::pluginPath('CodeSniffer') . 'Vendor' . DS . 'exe' . DS;
+			$copyFile = str_replace('.tgz', '_.tgz', $file);
+			$tarFile = str_replace('.tgz', '_.tar', $file);
+			if (file_exists($copyFile)) {
+				unlink($copyFile);
+			}
+			if (file_exists($tarFile)) {
+				unlink($tarFile);
+			}
+			exec('cp ' . $file . ' ' . $copyFile);
+			exec($exePath.'gzip -dr ' . $copyFile);
+			exec($exePath . 'tar -xvf ' . $tarFile);
+		} else {
+			exec('tar -xzf ' . $file);
+		}
+	}
+
+	protected function _extractZip($file) {
+		$Zip = new ZipArchive();
+		if (!$Zip->open($file)) {
+			$this->error('Cannot open zile file' . $file);
+		}
+    $Zip->extractTo(dirname($file));
+    $Zip->close();
+    return true;
+	}
+
+	protected function _installCodeSniffer($target) {
+		$tmp = TMP . 'cs' . DS;
+		$this->_extract($tmp . 'cs.tgz');
+
+		$Folder = new FolderLib($target);
+		//$Folder->clear();
+	}
+
+	protected function _installRules($target) {
+		$tmp = TMP . 'cs' . DS;
+		$this->_extractZip($tmp . 'cakephp.zip');
+
+		$folder = $tmp . 'cakephp-codesniffer-master' . DS;
+		if (WINDOWS) {
+			$windowsNewlines = strpos(file_get_contents(__FILE__), "\r\n") !== false;
+			if ($windowsNewlines) {
+				$this->_correctNewlines($folder);
+			}
+    }
+
+		$Folder = new FolderLib($target);
+		$Folder->clear();
+
+		$Folder = new FolderLib($folder);
+		return $Folder->copy(array('to' => $target));
+	}
+
+	protected function _correctNewlines($folder) {
+		$Iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder),
+			RecursiveIteratorIterator::CHILD_FIRST);
+    foreach ($Iterator as $path) {
+	    if ($path->isDir()) {
+				continue;
+	    }
+    	$path = $path->__toString();
+			file_put_contents($path, str_replace("\n", "\r\n", file_get_contents($path)));
+    }
+	}
+
+	/**
+	 * CodeSnifferShell::_downloadRules()
+	 *
+	 * @param string $url
+	 * @return boolean Success
+	 */
+	protected function _downloadRules($url) {
+		$tmp = TMP . 'cs' . DS;
+		if (!is_dir($tmp)) {
+			mkdir($tmp, 0770, true);
+		}
+		if (file_exists($tmp . 'cakephp.zip')) {
+			$this->out('Found cakephp tmp files, skipping re-download.', 1, Shell::VERBOSE);
+			return true;
+		}
+		$Http = new HttpSocket(array('timeout' => MINUTE, 'ssl_verify_peer' => false, 'ssl_verify_host' => false));
+		$content = $Http->get($url);
+		if ($content->code != 200) {
+			$this->error('Could not download the cakephp rules from ' . $url);
+		}
+		if (!file_put_contents($tmp . 'cakephp.zip', $content)) {
+			$this->error('Could not store the rules at ' . $tmp);
+		}
+
+		return true;
+	}
+
+	/**
+	 * CodeSnifferShell::_downloadCodeSniffer()
+	 *
+	 * @param string $url
+	 * @return string Version
+	 */
+	protected function _downloadCodeSniffer($url) {
+		$tmp = TMP . 'cs' . DS;
+		if (!is_dir($tmp)) {
+			mkdir($tmp, 0770, true);
+		}
+		if (file_exists($tmp . 'cs.version')) {
+			if (!file_exists($tmp . 'cs.tgz')) {
+				$this->error('Please clear your ' . $tmp . ' folder');
+			}
+			$this->out('Found codesniffer tmp files, skipping re-download.', 1, Shell::VERBOSE);
+			return file_get_contents($tmp . 'cs.version');
+		}
+		$Http = new HttpSocket();
+		$content = $Http->get($url);
+		if ($content->code != 200) {
+			$this->error('Could not read rss feed from ' . $url);
+		}
+		preg_match('/resource\=\"http\:\/\/pear\.php\.net\/package\/PHP_CodeSniffer\/download\/(.+?)\/\"/i', $content, $matches);
+		if (empty($matches)) {
+			$this->error('Could not find package in rss feed from ' . $url);
+		}
+		$version = $matches[1];
+		$fileUrl = 'http://download.pear.php.net/package/PHP_CodeSniffer-' . $version . '.tgz';
+
+
+		$Http = new HttpSocket(array('timeout' => MINUTE));
+		$content = $Http->get($fileUrl);
+		if ($content->code != 200) {
+			$this->error('Could not download the cs package from ' . $fileUrl);
+		}
+		if (!file_put_contents($tmp . 'cs.tgz', $content)) {
+			$this->error('Could not store the cs package at ' . $tmp);
+		}
+		file_put_contents($tmp . 'cs.version', $version);
+		return $version;
 	}
 
 	/**
