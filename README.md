@@ -83,6 +83,7 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 * Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example).
 * ReturnEarly sniff to detect if a return statement is followed by an ELSE block.
 * Make Squiz sniff not falsely report whitespace issues in Windows.
+* Detect Yoda conditions.
 
 For details see the ruleset.xml in the `Standards` dir.
 
@@ -93,6 +94,7 @@ You are free to stick to the official version using the "CakePHP" standard!
 ### MyCakePHPCore improvements (optional)
 
 * Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example)
+* Detect Yoda conditions.
 
 ## TODOS
 

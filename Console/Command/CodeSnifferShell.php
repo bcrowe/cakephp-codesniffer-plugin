@@ -269,6 +269,8 @@ class CodeSnifferShell extends AppShell {
 	 * @return void
 	 */
 	public function standards() {
+		$this->out('Current standard: ' . $this->standard, 2);
+
 		$_SERVER['argv'] = array();
 		$_SERVER['argv'][] = 'phpcs';
 		$_SERVER['argv'][] = '-i';
@@ -359,6 +361,12 @@ class CodeSnifferShell extends AppShell {
 		//$Folder->clear();
 	}
 
+	/**
+	 * Update CakePHP sniffs.
+	 *
+	 * @param string $target Absolute path to extract to.
+	 * @return boolean Success
+	 */
 	protected function _installRules($target) {
 		$tmp = TMP . 'cs' . DS;
 		$this->_extractZip($tmp . 'cakephp.zip');
@@ -529,7 +537,6 @@ class CodeSnifferShell extends AppShell {
 	protected function _process() {
 		include_once 'PHP/CodeSniffer/CLI.php';
 
-
 		$phpcs = new PHP_CodeSniffer_CLI();
 		$phpcs->checkRequirements();
 
@@ -585,6 +592,10 @@ class CodeSnifferShell extends AppShell {
 		))
 		->addSubcommand('run', array(
 			'help' => __d('cake_console', 'Run CS on the specified path.'),
+			//'parser' => $parser
+		))
+		->addSubcommand('install', array(
+			'help' => __d('cake_console', 'Install/update current CakePHP Sniffs.'),
 			//'parser' => $parser
 		));
 

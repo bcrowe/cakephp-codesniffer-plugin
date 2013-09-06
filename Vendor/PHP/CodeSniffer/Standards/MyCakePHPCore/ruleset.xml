@@ -30,6 +30,7 @@
 	<rule ref="CakePHP.ControlStructures.ElseIfDeclaration"/>
 	<rule ref="CakePHP.ControlStructures.WhileStructures"/>
 	<rule ref="MyCakePHP.ControlStructures.ReturnEarly"/>
+	<rule ref="MyCakePHP.ControlStructures.ConditionalExpressionOrder"/>
 
 	<rule ref="Zend.Files.ClosingTag"/>
 	<rule ref="MyCakePHP.Files.LineEndings"/>
