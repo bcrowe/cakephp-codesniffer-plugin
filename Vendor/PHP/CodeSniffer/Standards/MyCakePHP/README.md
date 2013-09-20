@@ -14,6 +14,8 @@ After installation you can check code compliance to the standard using
 
 ### Changes to the CakePHP one
 
+* Added IsNull sniff
+* Added Type casting sniff
 * Intentation correct (same level as methods and attributes for classes)
 * LF on Windows are allowed to be \r\n
 
