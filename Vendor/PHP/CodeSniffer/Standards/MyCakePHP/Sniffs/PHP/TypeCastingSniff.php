@@ -1,11 +1,4 @@
 <?php
-if (!defined('WINDOWS')) {
-	if (substr(PHP_OS, 0, 3) == 'WIN') {
-		define('WINDOWS', true);
-	} else {
-		define('WINDOWS', false);
-	}
-}
 
 /**
  * MyCakePHP_Sniffs_PHP_TypeCastingSniff
