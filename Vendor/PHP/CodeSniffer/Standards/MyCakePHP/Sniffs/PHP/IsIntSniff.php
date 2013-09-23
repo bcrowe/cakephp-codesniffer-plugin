@@ -2,7 +2,7 @@
 /**
  * PHP Version 5
  *
- * MyCakePHP_Sniffs_ControlStructures_IsNullSniff
+ * MyCakePHP_Sniffs_PHP_IsIntSniff
  *
  * @category  PHP
  * @author    Mark Scherer <dereuromark@gmail.com>
@@ -11,10 +11,10 @@
  */
 
 /**
- * Ensures that strict check "=== null" is used instead of is_null().
+ * Ensures that short forms of is_*() are used if possible.
  *
  */
-class MyCakePHP_Sniffs_ControlStructures_IsNullSniff implements PHP_CodeSniffer_Sniff {
+class MyCakePHP_Sniffs_PHP_IsIntSniff implements PHP_CodeSniffer_Sniff {
 
 /**
  * Returns an array of tokens this test wants to listen for.
@@ -28,7 +28,7 @@ class MyCakePHP_Sniffs_ControlStructures_IsNullSniff implements PHP_CodeSniffer_
 /**
  * Processes this test, when one of its tokens is encountered.
  *
- * Ensures that strict check "=== null" is used instead of is_null().
+ * Ensures that short forms of is_*() are used if possible.
  *
  * @param PHP_CodeSniffer_File $phpcsFile The file being scanned.
  * @param integer              $stackPtr  The position of the current token in the
@@ -38,7 +38,7 @@ class MyCakePHP_Sniffs_ControlStructures_IsNullSniff implements PHP_CodeSniffer_
 	public function process(PHP_CodeSniffer_File $phpcsFile, $stackPtr) {
 		$tokens = $phpcsFile->getTokens();
 		$content = strtolower($tokens[$stackPtr]['content']);
-		if ($content !== 'is_null') {
+		if ($content !== 'is_integer') {
 			return;
 		}
 		$nextToken = $phpcsFile->findNext(T_WHITESPACE, ($stackPtr + 1), null, true);
@@ -46,7 +46,7 @@ class MyCakePHP_Sniffs_ControlStructures_IsNullSniff implements PHP_CodeSniffer_
 			return;
 		}
 
-		$error = 'Usage of ' . $content . ' not allowed; use strict null check (=== null) instead';
+		$error = 'Usage of ' . $tokens[$stackPtr]['content'] . ' not allowed; use short form is_int() instead';
 		$phpcsFile->addError($error, $stackPtr, 'NotAllowed');
 	}
 
