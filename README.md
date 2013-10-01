@@ -84,6 +84,8 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 * ReturnEarly sniff to detect if a return statement is followed by an ELSE block.
 * Make Squiz sniff not falsely report whitespace issues in Windows.
 * Detect Yoda conditions.
+* Added IsNull sniff
+* Added Type casting sniff
 
 For details see the ruleset.xml in the `Standards` dir.
 
