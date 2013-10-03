@@ -23,7 +23,7 @@ class MyCakePHP_Sniffs_ControlStructures_ConditionalExpressionOrderSniff impleme
 	 * Processes this test, when one of its tokens is encountered.
 	 *
 	 * @param PHP_CodeSniffer_File $phpcsFile The file being scanned.
-	 * @param int                  $stackPtr  The position of the current token in the
+	 * @param integer              $stackPtr  The position of the current token in the
 	 *                                        stack passed in $tokens.
 	 * @return void
 	 */

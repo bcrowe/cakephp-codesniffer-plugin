@@ -86,6 +86,7 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 * Detect Yoda conditions.
 * Added IsNull sniff
 * Added Type casting sniff
+* Added @return doc block sniff
 
 For details see the ruleset.xml in the `Standards` dir.
 

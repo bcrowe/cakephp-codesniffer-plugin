@@ -22,6 +22,7 @@
 	<!--<rule ref="Squiz.Commenting.FunctionComment"/>-->
 	<rule ref="CakePHP.Commenting.FunctionCommentThrowTag"/>
 	<rule ref="Generic.Commenting.Todo"/>
+	<rule ref="MyCakePHP.Commenting.ReturnTag"/>
 
 	<rule ref="PEAR.ControlStructures.ControlSignature"/>
 	<rule ref="Squiz.ControlStructures.ForEachLoopDeclaration"/>

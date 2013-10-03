@@ -13,7 +13,6 @@ if (!defined('WINDOWS')) {
  * PHP version 5
  *
  * @category  PHP
- * @package   PHP_CodeSniffer_CakePHP
  * @author    Mark Scherer <dereuromark@gmail.com>
  * @copyright Copyright 2005-2013, Cake Software Foundation, Inc. (http://cakefoundation.org)
  * @license   http://www.opensource.org/licenses/mit-license.php MIT License
