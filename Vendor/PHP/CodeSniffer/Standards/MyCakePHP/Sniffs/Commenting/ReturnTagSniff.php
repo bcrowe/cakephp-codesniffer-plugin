@@ -42,7 +42,7 @@ class MyCakePHP_Sniffs_Commenting_ReturnTagSniff extends PHP_CodeSniffer_Standar
 
 		// Type of method
 		$method = $phpcsFile->findNext(T_STRING, ($stackPtr + 1));
-		$returnAllowed = !in_array($tokens[$method]['content'], array('__construct', '__destruct'));
+		$returnRequired = !in_array($tokens[$method]['content'], array('__construct', '__destruct'));
 
 		$find = array(
 			T_COMMENT,
@@ -64,23 +64,39 @@ class MyCakePHP_Sniffs_Commenting_ReturnTagSniff extends PHP_CodeSniffer_Standar
 		}
 
 		$commentStart = ($phpcsFile->findPrevious(T_DOC_COMMENT, ($commentEnd - 1), null, true) + 1);
-		$comment = $phpcsFile->getTokensAsString($commentStart, ($commentEnd - $commentStart + 1));
 
-		if (strpos($comment, '@return ') === false && !$returnAllowed) {
+		//$comment = $phpcsFile->getTokensAsString($commentStart, ($commentEnd - $commentStart + 1));
+		$commentWithReturn = null;
+		for ($i = $commentEnd; $i >= $commentStart; $i--) {
+			$currentComment = $tokens[$i]['content'];
+			if (strpos($currentComment, '@return ') !== false) {
+				$commentWithReturn = $i;
+				break;
+			}
+		}
+
+		if (!$commentWithReturn && !$returnRequired) {
 			return;
 		}
-		if (strpos($comment, '@return ') !== false && $returnAllowed) {
+
+		if ($commentWithReturn && $returnRequired) {
 			return;
 		}
 
-		if (strpos($comment, '@return ') === false) {
+		// A class method should have @return
+		if (!$commentWithReturn) {
 			$error = 'Missing @return tag in function comment';
-			$phpcsFile->addError($error, $commentEnd, 'Missing');
+			$phpcsFile->addError($error, $commentWithReturn, 'Missing');
 			return;
 		}
-		if (strpos($comment, '@return ') !== false) {
+
+		// Constructor/deconstructor should not have @return
+		if ($commentWithReturn) {
 			$error = 'Unexpected @return tag in constructor/deconstructor comment';
-			$phpcsFile->addError($error, $commentEnd, 'Unexpected');
+			$phpcsFile->addFixableError($error, $commentWithReturn, 'Unexpected');
+			if ($phpcsFile->fixer->enabled === true) {
+				$phpcsFile->fixer->replaceToken($commentWithReturn, '');
+			}
 			return;
 		}
 	}

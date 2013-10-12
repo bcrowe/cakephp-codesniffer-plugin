@@ -45,7 +45,7 @@
 	<rule ref="PSR2.Namespaces.UseDeclaration"/>
 
 	<rule ref="Generic.NamingConventions.ConstructorName"/>
-	<rule ref="Generic.NamingConventions.UpperCaseConstantName"/>
+	<rule ref="CakePHP.NamingConventions.UpperCaseConstantName"/>
 	<rule ref="PEAR.NamingConventions.ValidClassName"/>
 	<rule ref="CakePHP.NamingConventions.ValidClassBrackets"/>
 	<rule ref="CakePHP.NamingConventions.ValidFunctionName"/>

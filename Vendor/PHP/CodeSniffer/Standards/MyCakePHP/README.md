@@ -14,8 +14,11 @@ After installation you can check code compliance to the standard using
 
 ### Changes to the CakePHP one
 
+* Detect Yoda conditions.
 * Added IsNull sniff
 * Added Type casting sniff
+* Added @return doc block sniff
+* Added Ternary (incl. short ternary) sniff
 * Intentation correct (same level as methods and attributes for classes)
 * LF on Windows are allowed to be \r\n
 

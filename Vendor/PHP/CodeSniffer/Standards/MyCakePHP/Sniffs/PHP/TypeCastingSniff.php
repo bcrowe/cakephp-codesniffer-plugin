@@ -47,7 +47,16 @@ class MyCakePHP_Sniffs_PHP_TypeCastingSniff implements PHP_CodeSniffer_Sniff {
 				return;
 			}
 			$error = 'Usage of !! cast is not allowed. Please use (bool) to cast.';
-			$phpcsFile->addWarning($error, $stackPtr, 'Error');
+			$phpcsFile->addFixableError($error, $stackPtr, 'NotAllowed');
+
+			// Fix the error
+			if ($phpcsFile->fixer->enabled === true) {
+				$phpcsFile->fixer->beginChangeset();
+				$phpcsFile->fixer->replaceToken($stackPtr, '(bool)');
+				$phpcsFile->fixer->replaceToken($nextToken, '');
+				$phpcsFile->fixer->endChangeset();
+			}
+
 			return;
 		}
 
@@ -60,13 +69,29 @@ class MyCakePHP_Sniffs_PHP_TypeCastingSniff implements PHP_CodeSniffer_Sniff {
 		$key = strtolower($content);
 		if (isset($matching[$key])) {
 			$error = 'Please use ' . $matching[$key] . ' instead of ' . $content . '.';
-			$phpcsFile->addWarning($error, $stackPtr, 'Warning');
+			$phpcsFile->addFixableError($error, $stackPtr, 'NotAllowed');
+			$this->_correct($phpcsFile, $stackPtr, $matching[$key]);
 			return;
 		}
 		if ($content !== $key) {
 			$error = 'Please use ' . $key . ' instead of ' . $content . '.';
-			$phpcsFile->addWarning($error, $stackPtr, 'Warning');
+			$phpcsFile->addFixableError($error, $stackPtr, 'NotAllowed');
+			$this->_correct($phpcsFile, $stackPtr, $key);
 			return;
+		}
+	}
+
+	/**
+	 * MyCakePHP_Sniffs_PHP_TypeCastingSniff::_correct()
+	 *
+	 * @param object $phpcsFile
+	 * @param int $position
+	 * @param string $value
+	 * @return void
+	 */
+	protected function _correct($phpcsFile, $position, $value) {
+		if ($phpcsFile->fixer->enabled === true) {
+			$phpcsFile->fixer->replaceToken($position, $value);
 		}
 	}
 

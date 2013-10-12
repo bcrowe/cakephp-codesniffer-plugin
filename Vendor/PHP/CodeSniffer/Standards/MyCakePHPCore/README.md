@@ -14,5 +14,6 @@ After installation you can check code compliance to the standard using
 
 ### Changes to the CakePHP one
 
+* Detect Yoda conditions.
+* Added @return doc block sniff
 * LF on Windows are allowed to be \r\n
-

@@ -30,31 +30,47 @@ class MyCakePHP_Sniffs_ControlStructures_ConditionalExpressionOrderSniff impleme
 	public function process(PHP_CodeSniffer_File $phpcsFile, $stackPtr) {
 		$tokens = $phpcsFile->getTokens();
 
+		// Open paranthesis should come next
 		$nextToken = $phpcsFile->findNext(T_OPEN_PARENTHESIS, ($stackPtr + 1));
 		if (!$nextToken) {
 			return;
 		}
 
 		// Look for the first expression
-		$nextToken = $phpcsFile->findNext(T_WHITESPACE, ($nextToken + 1), null, true);
-		if (!$nextToken) {
+		$leftToken = $phpcsFile->findNext(T_WHITESPACE, ($nextToken + 1), null, true);
+		if (!$leftToken) {
 			return;
 		}
 
-		if (!in_array($tokens[$nextToken]['code'], array(T_NULL, T_FALSE, T_TRUE, T_LNUMBER, T_CONSTANT_ENCAPSED_STRING))) {
+		if (!in_array($tokens[$leftToken]['code'], array(T_NULL, T_FALSE, T_TRUE, T_LNUMBER, T_CONSTANT_ENCAPSED_STRING))) {
 			return;
 		}
 
 		// Get the comparison operator
-		$nextToken = $phpcsFile->findNext(T_WHITESPACE, ($nextToken + 1), null, true);
+		$comparisonToken = $phpcsFile->findNext(T_WHITESPACE, ($leftToken + 1), null, true);
 		$tokensToCheck = array(T_IS_IDENTICAL, T_IS_NOT_IDENTICAL, T_IS_EQUAL, T_IS_NOT_EQUAL, T_GREATER_THAN, T_LESS_THAN,
 			T_IS_GREATER_OR_EQUAL, T_IS_SMALLER_OR_EQUAL);
-		if (!in_array($tokens[$nextToken]['code'], $tokensToCheck)) {
+		if (!in_array($tokens[$comparisonToken]['code'], $tokensToCheck)) {
+			return;
+		}
+
+		// Look for the right expression
+		$rightToken = $phpcsFile->findNext(T_WHITESPACE, ($comparisonToken + 1), null, true);
+		if (!$rightToken) {
 			return;
 		}
 
 		$error = 'Usage of Yoda conditions is not adviced. Please switch the expression order.';
-		$phpcsFile->addWarning($error, $stackPtr, 'Warning');
+		$phpcsFile->addFixableError($error, $stackPtr, 'ExpressionOrder');
+
+		// Fix the error
+		if ($phpcsFile->fixer->enabled === true) {
+			$tmp = $tokens[$leftToken]['content'];
+			$phpcsFile->fixer->beginChangeset();
+			$phpcsFile->fixer->replaceToken($leftToken, $tokens[$rightToken]['content']);
+			$phpcsFile->fixer->replaceToken($rightToken, $tmp);
+			$phpcsFile->fixer->endChangeset();
+		}
 	}
 
 }

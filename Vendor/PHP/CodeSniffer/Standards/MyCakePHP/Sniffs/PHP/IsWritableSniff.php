@@ -41,13 +41,19 @@ class MyCakePHP_Sniffs_PHP_IsWritableSniff implements PHP_CodeSniffer_Sniff {
 		if ($content !== 'is_writeable') {
 			return;
 		}
+
 		$nextToken = $phpcsFile->findNext(T_WHITESPACE, ($stackPtr + 1), null, true);
 		if ($tokens[$nextToken]['code'] !== T_OPEN_PARENTHESIS) {
 			return;
 		}
 
 		$error = 'Usage of ' . $tokens[$stackPtr]['content'] . ' not allowed; use short form is_writable() instead';
-		$phpcsFile->addError($error, $stackPtr, 'NotAllowed');
+		$phpcsFile->addFixableError($error, $stackPtr, 'NotAllowed');
+
+		// Fix the error
+		if ($phpcsFile->fixer->enabled === true) {
+			$phpcsFile->fixer->replaceToken($stackPtr, 'is_writable');
+		}
 	}
 
 }

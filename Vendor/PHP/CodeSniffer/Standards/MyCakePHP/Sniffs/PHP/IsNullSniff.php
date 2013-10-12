@@ -41,13 +41,39 @@ class MyCakePHP_Sniffs_PHP_IsNullSniff implements PHP_CodeSniffer_Sniff {
 		if ($content !== 'is_null') {
 			return;
 		}
-		$nextToken = $phpcsFile->findNext(T_WHITESPACE, ($stackPtr + 1), null, true);
-		if ($tokens[$nextToken]['code'] !== T_OPEN_PARENTHESIS) {
+
+		// Open parenthesis should come next
+		$openToken = $phpcsFile->findNext(T_WHITESPACE, ($stackPtr + 1), null, true);
+		if ($tokens[$openToken]['code'] !== T_OPEN_PARENTHESIS) {
 			return;
 		}
 
-		$error = 'Usage of ' . $tokens[$stackPtr]['content'] . ' not allowed; use strict null check (=== null) instead';
-		$phpcsFile->addError($error, $stackPtr, 'NotAllowed');
+		$closeToken = $phpcsFile->findNext(T_CLOSE_PARENTHESIS, ($openToken + 1));
+		if (!$closeToken) {
+			return;
+		}
+
+		$comparison = '===';
+		$previousToken = $phpcsFile->findPrevious(T_WHITESPACE, ($stackPtr - 1), null, true);
+		if ($previousToken && $tokens[$previousToken]['code'] === T_BOOLEAN_NOT) {
+			$comparison = '!==';
+		}
+
+		$error = 'Usage of ' . $tokens[$stackPtr]['content'] . ' not allowed; use strict null check (' . $comparison . ' null) instead';
+		$phpcsFile->addFixableError($error, $stackPtr, 'NotAllowed');
+
+		// Fix the error
+		if ($phpcsFile->fixer->enabled === true) {
+			$phpcsFile->fixer->beginChangeset();
+			for ($i = $stackPtr; $i <= $openToken; $i++) {
+				$phpcsFile->fixer->replaceToken($i, '');
+			}
+			if ($comparison === '!==') {
+				$phpcsFile->fixer->replaceToken($previousToken, '');
+			}
+			$phpcsFile->fixer->replaceToken($closeToken, ' ' . $comparison . ' null');
+			$phpcsFile->fixer->endChangeset();
+		}
 	}
 
 }
