@@ -18,6 +18,9 @@ It is also quite helpful when creating new sniffer rules (using tokenizer comman
 
 CakePHP 2.x
 
+This is a self-contained plugin shipped with everything including phpcs and sniffs.
+Drag and drop it. Run it. Enjoy.
+
 ## How to use
 
 1. Download the plugin and place it at `APP/Plugin/CodeSniffer` (or ROOT/plugins/ folder).
