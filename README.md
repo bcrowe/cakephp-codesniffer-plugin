@@ -61,6 +61,17 @@ You can also check only a specific sniff:
 	cake CodeSniffer.CodeSniffer run /folder/to/check --standard=MyCakePHP
 		--sniffs=MyCakePHP.ControlStructures.ReturnEarly
 
+NEW: Upgrading the vendor phpcs package to "phpcs-fixer" branch, you can now leverage auto-correction
+for some found errors using `--fix` or `-f`:
+
+	cake CodeSniffer.Codesniffer run -f
+
+It will also display a diff on old made changes afterwards.
+Using the APP itself, a relative path inside the APP or `-p PluginName` it will by default skip any "Vendor"
+and "webroot" folders found. Using an absolute custom path it will not skip anything:
+
+	cake CodeSniffer.Codesniffer run /folder/to/check -f
+
 ### Settings/Options
 
 By default it uses the CakePHP rules.
