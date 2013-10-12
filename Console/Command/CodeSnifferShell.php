@@ -67,16 +67,20 @@ class CodeSnifferShell extends AppShell {
 	 */
 	public function run() {
 		// for larger PHP files we need some more memory
-		ini_set('memory_limit', '256M');
+		ini_set('memory_limit', '512M');
 
 		$path = null;
+		$customPath = false;
 		if (!empty($this->args)) {
 			$path = $this->args[0];
+			$customPath = true;
 		}
 		if (!empty($this->params['plugin'])) {
 			$path = CakePlugin::path(Inflector::camelize($this->params['plugin'])) . $path;
+			$customPath = false;
 		} elseif (empty($path)) {
 			$path = APP;
+			$customPath = false;
 		}
 		$path = realpath($path);
 		if (empty($path)) {
@@ -94,7 +98,7 @@ class CodeSnifferShell extends AppShell {
 			$_SERVER['argv'][] = '--sniffs=' . $this->params['sniffs'];
 		}
 
-		$_SERVER['argv'][] = '--report-file='.TMP.'phpcs.txt';
+		$_SERVER['argv'][] = '--report-file=' . TMP . 'phpcs.txt';
 		if (!$this->params['quiet']) {
 			$_SERVER['argv'][] = '-p';
 		}
@@ -104,6 +108,10 @@ class CodeSnifferShell extends AppShell {
 		}
 		//$_SERVER['argv'][] = '--error-severity=1';
 		//$_SERVER['argv'][] = '--warning-severity=1';
+
+		if (!$customPath) {
+			$_SERVER['argv'][] = '--ignore=*/webroot/*,*/Vendor/*,*__*';
+		}
 
 		$ext = $this->ext;
 		if ($this->params['ext'] === '*') {
@@ -118,7 +126,6 @@ class CodeSnifferShell extends AppShell {
 		$_SERVER['argv'][] = $path;
 
 		$_SERVER['argc'] = count($_SERVER['argv']);
-
 
 		// Optionally use PHP_Timer to print time/memory stats for the run.
 		// Note that the reports are the ones who actually print the data
@@ -183,7 +190,7 @@ class CodeSnifferShell extends AppShell {
 	 * CodeSnifferShell::_getTokens()
 	 *
 	 * @param string $path
-	 * @return array $tokens
+	 * @return array Tokens
 	 */
 	protected function _getTokens($path) {
 		include_once('PHP/CodeSniffer.php');
@@ -226,7 +233,7 @@ class CodeSnifferShell extends AppShell {
 					}
 					$tokenList[] = $k . '=' . $v;
 				}
-				$pieces[] = $type . ' ('.$key.') ' . implode(', ', $tokenList);
+				$pieces[] = $type . ' (' . $key . ') ' . implode(', ', $tokenList);
 			} else {
 				$pieces[] = $token['type'];
 			}
@@ -297,6 +304,7 @@ class CodeSnifferShell extends AppShell {
 			$this->error('This needs the Tools plugin');
 		}
 		$this->out('Downloading latest CodeSniffer package');
+		//$file = 'https://github.com/squizlabs/PHP_CodeSniffer/archive/phpcs-fixer.zip';
 		$feed = 'http://pear.php.net/feeds/pkg_php_codesniffer.rss';
 		$version = $this->_downloadCodeSniffer($feed);
 
@@ -336,7 +344,7 @@ class CodeSnifferShell extends AppShell {
 				unlink($tarFile);
 			}
 			exec('cp ' . $file . ' ' . $copyFile);
-			exec($exePath.'gzip -dr ' . $copyFile);
+			exec($exePath . 'gzip -dr ' . $copyFile);
 			exec($exePath . 'tar -xvf ' . $tarFile);
 		} else {
 			exec('tar -xzf ' . $file);
@@ -409,8 +417,8 @@ class CodeSnifferShell extends AppShell {
 		if (!is_dir($tmp)) {
 			mkdir($tmp, 0770, true);
 		}
-		if (file_exists($tmp . 'cakephp.zip')) {
-			$this->out('Found cakephp tmp files, skipping re-download.', 1, Shell::VERBOSE);
+		if (file_exists($tmp . 'cakephp.zip') && filemtime($tmp . 'cakephp.zip') > time() - HOUR) {
+			$this->out('Found cakephp tmp files, skipping re-download.');
 			return true;
 		}
 		$Http = new HttpSocket(array('timeout' => MINUTE, 'ssl_verify_peer' => false, 'ssl_verify_host' => false));
@@ -454,7 +462,6 @@ class CodeSnifferShell extends AppShell {
 		}
 		$version = $matches[1];
 		$fileUrl = 'http://download.pear.php.net/package/PHP_CodeSniffer-' . $version . '.tgz';
-
 
 		$Http = new HttpSocket(array('timeout' => MINUTE));
 		$content = $Http->get($fileUrl);
@@ -500,7 +507,7 @@ class CodeSnifferShell extends AppShell {
 
 		$_SERVER['argv'] = array();
 		$_SERVER['argv'][] = 'phpcs';
-		$_SERVER['argv'][] = VENDORS.'PHP'.DS;
+		$_SERVER['argv'][] = VENDORS . 'PHP' . DS;
 		$_SERVER['argv'][] = 'xml';
 		$_SERVER['argv'][] = 'codesize';
 		//$_SERVER['argv'][] = '--error-severity=1';
@@ -515,7 +522,6 @@ class CodeSnifferShell extends AppShell {
 		// Run command line interface
 		exit(PHP_PMD_TextUI_Command::main($_SERVER['argv']));
 	}
-
 
 	/**
 	 * Check if CodeSniffer.phar is available
@@ -540,7 +546,53 @@ class CodeSnifferShell extends AppShell {
 		$phpcs = new PHP_CodeSniffer_CLI();
 		$phpcs->checkRequirements();
 
-		$numErrors = $phpcs->process();
+		$cliValues = $phpcs->getCommandLineValues();
+
+		if ($this->params['fix']) {
+			// Override some of the command line settings that might be used and stop us
+			// gettting a diff file.
+			$diffFile = TMP . 'phpcbf-fixed.diff';
+
+			$cliValues['generator'] = '';
+			$cliValues['explain'] = false;
+			$cliValues['reports'] = array('diff' => $diffFile);
+
+			if (file_exists($diffFile) === true) {
+			    unlink($diffFile);
+			}
+		}
+		$numErrors = $phpcs->process($cliValues);
+
+		if ($this->params['fix']) {
+			if (file_exists($diffFile) === false) {
+		    // Nothing to fix.
+		    if ($numErrors === 0) {
+		        // And no errors reported.
+		        $exit = 0;
+		    } else {
+		        // Errors we can't fix.
+		        $exit = 2;
+		    }
+			} else {
+		    $cmd = "patch -p0 -ui \"$diffFile\"";
+		    $output = array();
+		    $retVal = null;
+		    exec($cmd, $output, $retVal);
+		    //unlink($diffFile);
+
+		    if ($retVal === 0) {
+		        // Everything went well.
+		        $filesPatched = count($output);
+		        echo "Patched $filesPatched files\n";
+		        $exit = 1;
+		    } else {
+		        print_r($output);
+		        echo "Returned: $retVal\n";
+		        $exit = 3;
+				}
+			}
+		}
+
 		if ($numErrors !== 0) {
 			$this->err('An error occured during processing.');
 		}
@@ -577,13 +629,18 @@ class CodeSnifferShell extends AppShell {
 				'description' => 'Checking files for specific sniffs only (comma separated list). E.g.: Generic.PHP.LowerCaseConstant,CakePHP.WhiteSpace.CommaSpacing',
 				'default' => ''
 			),
+			'fix' => array(
+				'short' => 'f',
+				'description' => 'Fix right away: Auto-correct errors and warnings where possible.',
+				'boolean' => true
+			),
 		))
 		->addSubcommand('test', array(
 			'help' => __d('cake_console', 'Test CS and list its installed version.'),
 			//'parser' => $parser
 		))
 		->addSubcommand('standards', array(
-			'help' => __d('cake_console', 'List available standards.'),
+			'help' => __d('cake_console', 'List available standards and the current default one.'),
 			//'parser' => $parser
 		))
 		->addSubcommand('tokenize', array(

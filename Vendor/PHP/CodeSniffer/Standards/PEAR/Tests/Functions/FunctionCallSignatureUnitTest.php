@@ -25,7 +25,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PEAR_Tests_Functions_FunctionCallSignatureUnitTest extends AbstractSniffUnitTest
@@ -68,7 +68,10 @@ class PEAR_Tests_Functions_FunctionCallSignatureUnitTest extends AbstractSniffUn
                 137 => 1,
                 142 => 2,
                 171 => 1,
-                203 => 1,
+                180 => 1,
+                181 => 1,
+                194 => 1,
+                205 => 1,
                );
 
     }//end getErrorList()

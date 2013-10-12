@@ -30,7 +30,7 @@ if (is_file(dirname(__FILE__).'/../CodeSniffer.php') === true) {
  * @copyright 2009 SQLI <www.sqli.com>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_Reporting
@@ -56,6 +56,13 @@ class PHP_CodeSniffer_Reporting
      * @var int
      */
     public $totalWarnings = 0;
+
+    /**
+     * Total number of errors/warnings that can be fixed.
+     *
+     * @var int
+     */
+    public $totalFixable = 0;
 
     /**
      * A list of reports that have written partial report output.
@@ -127,7 +134,7 @@ class PHP_CodeSniffer_Reporting
             $reportClass = self::factory($report);
 
             ob_start();
-            $result = $reportClass->generateFileReport($reportData, $cliValues['showSources'], $cliValues['reportWidth']);
+            $result = $reportClass->generateFileReport($reportData, $phpcsFile, $cliValues['showSources'], $cliValues['reportWidth']);
             if ($result === true) {
                 $errorsShown = true;
             }
@@ -158,6 +165,7 @@ class PHP_CodeSniffer_Reporting
             $this->totalFiles++;
             $this->totalErrors   += $reportData['errors'];
             $this->totalWarnings += $reportData['warnings'];
+            $this->totalFixable  += $reportData['fixable'];
         }
 
     }//end cacheFileReport()
@@ -206,6 +214,7 @@ class PHP_CodeSniffer_Reporting
             $this->totalFiles,
             $this->totalErrors,
             $this->totalWarnings,
+            $this->totalFixable,
             $showSources,
             $reportWidth,
             $toScreen
@@ -219,7 +228,6 @@ class PHP_CodeSniffer_Reporting
                 echo $generatedReport;
             }
 
-            $generatedReport = trim($generatedReport);
             file_put_contents($reportFile, $generatedReport.PHP_EOL);
         } else if (file_exists($filename) === true) {
             unlink($filename);
@@ -245,6 +253,7 @@ class PHP_CodeSniffer_Reporting
                    'filename' => $phpcsFile->getFilename(),
                    'errors'   => $phpcsFile->getErrorCount(),
                    'warnings' => $phpcsFile->getWarningCount(),
+                   'fixable'  => $phpcsFile->getFixableCount(),
                    'messages' => array(),
                   );
 
@@ -264,9 +273,10 @@ class PHP_CodeSniffer_Reporting
                                     'message'  => $data['message'],
                                     'source'   => $data['source'],
                                     'severity' => $data['severity'],
+                                    'fixable'  => $data['fixable'],
                                     'type'     => 'ERROR',
                                    );
-                }
+                }//end foreach
 
                 $errors[$line][$column] = $newErrors;
             }//end foreach
@@ -282,9 +292,10 @@ class PHP_CodeSniffer_Reporting
                                       'message'  => $data['message'],
                                       'source'   => $data['source'],
                                       'severity' => $data['severity'],
+                                      'fixable'  => $data['fixable'],
                                       'type'     => 'WARNING',
                                      );
-                }
+                }//end foreach
 
                 if (isset($errors[$line]) === false) {
                     $errors[$line] = array();

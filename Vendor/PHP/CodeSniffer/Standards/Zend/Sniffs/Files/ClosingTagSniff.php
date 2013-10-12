@@ -24,7 +24,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Zend_Sniffs_Files_ClosingTagSniff implements PHP_CodeSniffer_Sniff
@@ -73,7 +73,10 @@ class Zend_Sniffs_Files_ClosingTagSniff implements PHP_CodeSniffer_Sniff
         $content = trim($content);
         if (empty($content) === true) {
             $error = 'A closing tag is not permitted at the end of a PHP file';
-            $phpcsFile->addError($error, $stackPtr, 'NotAllowed');
+            $phpcsFile->addFixableError($error, $stackPtr, 'NotAllowed');
+            if ($phpcsFile->fixer->enabled === true) {
+                $phpcsFile->fixer->replaceToken($stackPtr, '');
+            }
         }
 
     }//end process()

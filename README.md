@@ -4,13 +4,19 @@ Author: Mark Scherer
 
 License: MIT
 
-This is quite helpful when creating new sniffer rules (using tokenizer command) or to quickly run
-your default standard sniffs against your CakePHP app. It also provides some good default values regarding
-default settings in general.
+The plugin provides a quick way to run your (default) sniffer rules on your app - or part (Plugin for example) of it.
+It comes with good default settings for Cake apps and works out of the box as self-contained system.
+
+By default it
+- ignores webroot and Vendor folders (in app or plugin)
+- creates a log file in TMP for larger error reports where the console screen can't hold that much information)
+- NEW: Can now also auto-correct most standard CS issues using the phpcs-fixer branch.
+
+It is also quite helpful when creating new sniffer rules (using tokenizer command).
 
 ## Requirements
 
-CakePHP v2.x
+CakePHP 2.x
 
 ## How to use
 
@@ -24,7 +30,6 @@ CakePHP v2.x
 2. Load the plugin by adding this line to the bottom of your app's `Config/bootstrap.php`:
 
    ```php
-   <?php
    CakePlugin::load('CodeSniffer'); // or just CakePlugin::loadAll();
    ```
 
@@ -79,14 +84,15 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 
 ### MyCakePHP improvements (optional)
 
-* Doc blocks / comments on correct indentation level (as their subsequent code).
-* Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example).
-* ReturnEarly sniff to detect if a return statement is followed by an ELSE block.
-* Make Squiz sniff not falsely report whitespace issues in Windows.
 * Detect Yoda conditions.
 * Added IsNull sniff
 * Added Type casting sniff
 * Added @return doc block sniff
+* Added Ternary (incl. short ternary) sniff
+* ReturnEarly sniff to detect if a return statement is followed by an ELSE block.
+* Doc blocks / comments on correct indentation level (as their subsequent code).
+* Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example).
+* Make Squiz sniff not falsely report whitespace issues in Windows.
 
 For details see the ruleset.xml in the `Standards` dir.
 

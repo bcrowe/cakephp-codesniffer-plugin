@@ -24,7 +24,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Squiz_Sniffs_WhiteSpace_FunctionClosingBraceSpaceSniff implements PHP_CodeSniffer_Sniff
@@ -104,9 +104,28 @@ class Squiz_Sniffs_WhiteSpace_FunctionClosingBraceSpaceSniff implements PHP_Code
             if ($found !== 1) {
                 $error = 'Expected 1 blank line before closing function brace; %s found';
                 $data  = array($found);
-                $phpcsFile->addError($error, $closeBrace, 'SpacingBeforeClose', $data);
-            }
-        }
+                $phpcsFile->addFixableError($error, $closeBrace, 'SpacingBeforeClose', $data);
+
+                if ($phpcsFile->fixer->enabled === true) {
+                    if ($found > 1) {
+                        $phpcsFile->fixer->beginChangeset();
+                        for ($i = ($prevContent + 1); $i < ($closeBrace - 1); $i++) {
+                            $phpcsFile->fixer->replaceToken($i, '');
+                        }
+
+                        $phpcsFile->fixer->replaceToken($i, $phpcsFile->eolChar);
+                        $phpcsFile->fixer->endChangeset();
+                    } else {
+                        // Try and maintain indentation.
+                        if ($tokens[($closeBrace - 1)]['code'] === T_WHITESPACE) {
+                            $phpcsFile->fixer->addNewlineBefore($closeBrace - 1);
+                        } else {
+                            $phpcsFile->fixer->addNewlineBefore($closeBrace);
+                        }
+                    }
+                }
+            }//end if
+        }//end if
 
     }//end process()
 

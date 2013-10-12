@@ -24,7 +24,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Generic_Sniffs_WhiteSpace_DisallowTabIndentSniff implements PHP_CodeSniffer_Sniff
@@ -75,7 +75,13 @@ class Generic_Sniffs_WhiteSpace_DisallowTabIndentSniff implements PHP_CodeSniffe
 
         if (strpos($tokens[$stackPtr]['content'], "\t") !== false) {
             $error = 'Spaces must be used to indent lines; tabs are not allowed';
-            $phpcsFile->addError($error, $stackPtr, 'TabsUsed');
+            $phpcsFile->addFixableError($error, $stackPtr, 'TabsUsed');
+
+            if ($phpcsFile->fixer->enabled === true) {
+                // Replace tabs with spaces, usign an indent of 4 spaces.
+                // Other sniffs can then correct the indent if they need to.
+                $phpcsFile->fixer->replaceToken($stackPtr, '    ');
+            }
         }
 
     }//end process()

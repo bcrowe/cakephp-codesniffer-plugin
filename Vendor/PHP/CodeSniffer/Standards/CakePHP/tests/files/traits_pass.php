@@ -6,6 +6,9 @@ use Cake\More;
 class Foo {
 
 	use BarTrait;
-	use FirstTrait;
+	use FirstTrait {
+		foo as bar;
+		config as protected _config;
+	}
 
 }

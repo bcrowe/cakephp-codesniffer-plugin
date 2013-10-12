@@ -20,7 +20,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_Tokenizers_PHP
@@ -245,6 +245,10 @@ class PHP_CodeSniffer_Tokenizers_PHP
      */
     public function tokenizeString($string, $eolChar='\n')
     {
+        if (PHP_CODESNIFFER_VERBOSITY > 1) {
+            echo "\t*** START PHP TOKENIZING ***".PHP_EOL;
+        }
+
         $tokens      = @token_get_all($string);
         $finalTokens = array();
 
@@ -256,6 +260,20 @@ class PHP_CodeSniffer_Tokenizers_PHP
         for ($stackPtr = 0; $stackPtr < $numTokens; $stackPtr++) {
             $token        = $tokens[$stackPtr];
             $tokenIsArray = is_array($token);
+
+            if (PHP_CODESNIFFER_VERBOSITY > 1) {
+                if ($tokenIsArray === true) {
+                    $type = token_name($token[0]);
+                    $content = str_replace($eolChar, "\033[30;1m\\n\033[0m", $token[1]);
+                } else {
+                    $newToken = PHP_CodeSniffer::resolveSimpleToken($token);
+                    $type     = $newToken['type'];
+                    $content  = $token;
+                }
+
+                $content = str_replace(' ', "\033[30;1m·\033[0m", $content);
+                echo "\tProcess token $stackPtr: $type => $content".PHP_EOL;
+            }
 
             /*
                 If we are using \r\n newline characters, the \r and \n are sometimes
@@ -451,12 +469,18 @@ class PHP_CodeSniffer_Tokenizers_PHP
                     }
                 }
 
-                if ($finalTokens[$x]['code'] !== T_CASE) {
+                if ($finalTokens[$x]['code'] !== T_CASE && $finalTokens[$x + 1]['code'] !== T_INLINE_THEN) {
                     $finalTokens[$newStackPtr] = array(
                                                   'content' => $token[1].':',
                                                   'code'    => T_GOTO_LABEL,
                                                   'type'    => 'T_GOTO_LABEL',
                                                  );
+
+                    if (PHP_CODESNIFFER_VERBOSITY > 1) {
+                        echo "\t\t* token $stackPtr changed from T_STRING to T_GOTO_LABEL".PHP_EOL;
+                        echo "\t\t* skipping T_COLON token ".($stackPtr + 1).PHP_EOL;
+                    }
+
                     $newStackPtr++;
                     $stackPtr++;
                     continue;
@@ -527,6 +551,10 @@ class PHP_CodeSniffer_Tokenizers_PHP
                 $newStackPtr++;
             }//end if
         }//end for
+
+        if (PHP_CODESNIFFER_VERBOSITY > 1) {
+            echo "\t*** END PHP TOKENIZING ***".PHP_EOL;
+        }
 
         return $finalTokens;
 

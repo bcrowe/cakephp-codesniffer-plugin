@@ -25,7 +25,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_DocGenerators_Generator
@@ -131,19 +131,8 @@ class PHP_CodeSniffer_DocGenerators_Generator
      */
     protected function getStandardFiles()
     {
-        if (is_dir($this->_standard) === true) {
-            // This is a custom standard.
-            $standardDir = $this->_standard;
-            $standard    = basename($this->_standard);
-        } else {
-            $standardDir
-                = realpath(dirname(__FILE__).'/../Standards/'.$this->_standard);
-
-            $standard = $this->_standard;
-        }
-
         $phpcs = new PHP_CodeSniffer();
-        $sniffs = $phpcs->getSniffFiles($standardDir, $standard);
+        $sniffs = $phpcs->processRuleset($this->_standard);
 
         $standardFiles = array();
         foreach ($sniffs as $sniff) {

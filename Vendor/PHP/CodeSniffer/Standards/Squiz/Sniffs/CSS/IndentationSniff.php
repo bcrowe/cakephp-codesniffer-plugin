@@ -22,7 +22,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Squiz_Sniffs_CSS_IndentationSniff implements PHP_CodeSniffer_Sniff
@@ -75,15 +75,18 @@ class Squiz_Sniffs_CSS_IndentationSniff implements PHP_CodeSniffer_Sniff
                 $indentLevel++;
 
                 // Check for nested class definitions.
-                $found  = $phpcsFile->findNext(
+                $found = $phpcsFile->findNext(
                     T_OPEN_CURLY_BRACKET,
                     ($i + 1),
                     $tokens[$i]['bracket_closer']
                 );
+
                 if ($found !== false) {
                     $nestingLevel = $indentLevel;
                 }
-            } else if ($tokens[($i + 1)]['code'] === T_CLOSE_CURLY_BRACKET) {
+            }
+
+            if ($tokens[($i + 1)]['code'] === T_CLOSE_CURLY_BRACKET) {
                 $indentLevel--;
             }
 

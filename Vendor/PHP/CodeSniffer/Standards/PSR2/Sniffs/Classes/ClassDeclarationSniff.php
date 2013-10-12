@@ -27,7 +27,7 @@ if (class_exists('PEAR_Sniffs_Classes_ClassDeclarationSniff', true) === false) {
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PSR2_Sniffs_Classes_ClassDeclarationSniff extends PEAR_Sniffs_Classes_ClassDeclarationSniff
@@ -295,8 +295,21 @@ class PSR2_Sniffs_Classes_ClassDeclarationSniff extends PEAR_Sniffs_Classes_Clas
         ) {
             $error = 'The closing brace for the %s must go on the next line after the body';
             $data  = array($tokens[$stackPtr]['content']);
-            $phpcsFile->addError($error, $closeBrace, 'CloseBraceAfterBody', $data);
-        }
+            $phpcsFile->addFixableError($error, $closeBrace, 'CloseBraceAfterBody', $data);
+
+            if ($phpcsFile->fixer->enabled === true) {
+                $phpcsFile->fixer->beginChangeset();
+                for ($i = ($prevContent + 1); $i < $closeBrace; $i++) {
+                    $phpcsFile->fixer->replaceToken($i, '');
+                }
+
+                if (strpos($tokens[$prevContent]['content'], $phpcsFile->eolChar) === false) {
+                    $phpcsFile->fixer->replaceToken($closeBrace, $phpcsFile->eolChar.$tokens[$closeBrace]['content']);
+                }
+
+                $phpcsFile->fixer->endChangeset();
+            }
+        }//end if
 
         // Check the closing brace is on it's own line, but allow
         // for comments like "//end class".

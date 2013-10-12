@@ -8,12 +8,12 @@ class CodeSnifferShellTest extends CakeTestCase {
 
 	public $testPath;
 
- 	public function setUp() {
- 		parent::setUp();
+	public function setUp() {
+		parent::setUp();
 
- 		$this->CodeSniffer = new TestCodeSnifferShell();
- 		$this->CodeSniffer->testPath = CakePlugin::path('CodeSniffer'). 'Test' . DS . 'test_files' . DS;
- 	}
+		$this->CodeSniffer = new TestCodeSnifferShell();
+		$this->CodeSniffer->testPath = CakePlugin::path('CodeSniffer') . 'Test' . DS . 'test_files' . DS;
+	}
 
 	/**
 	 * CodeSnifferShellTest::testTokenize()

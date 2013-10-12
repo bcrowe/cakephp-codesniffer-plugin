@@ -26,7 +26,7 @@ if (is_file(dirname(__FILE__).'/../CodeSniffer.php') === true) {
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_CLI
@@ -307,7 +307,7 @@ class PHP_CodeSniffer_CLI
             exit(0);
             break;
         case 'version':
-            echo 'PHP_CodeSniffer version 1.5.0RC3 (beta) ';
+            echo 'PHP_CodeSniffer version @package_version@ (@package_state@) ';
             echo 'by Squiz Pty Ltd. (http://www.squiz.com.au)'.PHP_EOL;
             exit(0);
             break;
@@ -412,6 +412,7 @@ class PHP_CodeSniffer_CLI
                                  'json',
                                  'checkstyle',
                                  'csv',
+                                 'diff',
                                  'emacs',
                                  'notifysend',
                                  'source',
@@ -521,6 +522,8 @@ class PHP_CodeSniffer_CLI
     {
         if (empty($values) === true) {
             $values = $this->getCommandLineValues();
+        } else {
+            $this->values = $values;
         }
 
         if ($values['generator'] !== '') {
@@ -602,7 +605,8 @@ class PHP_CodeSniffer_CLI
         }
 
         if (empty($values['reports']) === true) {
-            $this->values['reports']['full'] = $values['reportFile'];
+            $values['reports']['full'] = $values['reportFile'];
+            $this->values['reports']   = $values['reports'];
         }
 
         $phpcs->setCli($this);
@@ -812,7 +816,7 @@ class PHP_CodeSniffer_CLI
     public function printUsage()
     {
         echo 'Usage: phpcs [-nwlsaepvi] [-d key[=value]]'.PHP_EOL;
-        echo '    [--report=<report>] [--report-file=<reportfile>] [--report-<report>=<reportfile>] ...'.PHP_EOL;
+        echo '    [--report=<report>] [--report-file=<reportFile>] [--report-<report>=<reportFile>] ...'.PHP_EOL;
         echo '    [--report-width=<reportWidth>] [--generator=<generator>] [--tab-width=<tabWidth>]'.PHP_EOL;
         echo '    [--severity=<severity>] [--error-severity=<severity>] [--warning-severity=<severity>]'.PHP_EOL;
         echo '    [--config-set key value] [--config-delete key] [--config-show]'.PHP_EOL;
@@ -842,11 +846,11 @@ class PHP_CodeSniffer_CLI
         echo '        <tabWidth>    The number of spaces each tab represents'.PHP_EOL;
         echo '        <generator>   The name of a doc generator to use'.PHP_EOL;
         echo '                      (forces doc generation instead of checking)'.PHP_EOL;
-        echo '        <report>      Print either the "full", "xml", "checkstyle", "csv", "json"'.PHP_EOL;
-        echo '                      "emacs", "source", "summary", "svnblame", "gitblame", "hgblame" or'.PHP_EOL;
-        echo '                      "notifysend" report'.PHP_EOL;
+        echo '        <report>      Print either the "full", "xml", "checkstyle", "csv"'.PHP_EOL;
+        echo '                      "json", "emacs", "source", "summary", "diff"'.PHP_EOL;
+        echo '                      "svnblame", "gitblame", "hgblame" or "notifysend" report'.PHP_EOL;
         echo '                      (the "full" report is printed by default)'.PHP_EOL;
-        echo '        <reportfile>  Write the report to the specified file path'.PHP_EOL;
+        echo '        <reportFile>  Write the report to the specified file path'.PHP_EOL;
         echo '        <reportWidth> How many columns wide screen reports should be printed'.PHP_EOL;
 
     }//end printUsage()

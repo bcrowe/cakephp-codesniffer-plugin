@@ -22,7 +22,7 @@
  * @author    Roman Levishchenko <index.0h@gmail.com>
  * @copyright 2013 Roman Levishchenko
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Generic_Sniffs_Debug_CSSLintSniff implements PHP_CodeSniffer_Sniff

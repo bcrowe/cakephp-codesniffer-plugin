@@ -26,7 +26,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Generic_Sniffs_Formatting_MultipleStatementAlignmentSniff implements PHP_CodeSniffer_Sniff
@@ -268,11 +268,14 @@ class Generic_Sniffs_Formatting_MultipleStatementAlignmentSniff implements PHP_C
                     continue;
                 }
 
-                $expected .= ($expected === 1) ? ' space' : ' spaces';
-                if ($found === null) {
-                    $found = 'a new line';
+                $expectedText = $expected;
+                $expectedText .= ($expected === 1) ? ' space' : ' spaces';
+
+                $foundText = $found;
+                if ($foundText === null) {
+                    $foundText = 'a new line';
                 } else {
-                    $found .= ($found === 1) ? ' space' : ' spaces';
+                    $foundText .= ($foundText === 1) ? ' space' : ' spaces';
                 }
 
                 if (count($assignments) === 1) {
@@ -284,14 +287,23 @@ class Generic_Sniffs_Formatting_MultipleStatementAlignmentSniff implements PHP_C
                 }
 
                 $errorData = array(
-                              $expected,
-                              $found,
+                              $expectedText,
+                              $foundText,
                              );
 
                 if ($this->error === true) {
-                    $phpcsFile->addError($error, $assignment, $type, $errorData);
+                    $phpcsFile->addFixableError($error, $assignment, $type, $errorData);
                 } else {
-                    $phpcsFile->addWarning($error, $assignment, $type.'Warning', $errorData);
+                    $phpcsFile->addFixableWarning($error, $assignment, $type.'Warning', $errorData);
+                }
+
+                if ($phpcsFile->fixer->enabled === true && $found !== null) {
+                    $newContent = str_repeat(' ', $expected);
+                    if ($found === 0) {
+                        $phpcsFile->fixer->addContentBefore($assignment, $newContent);
+                    } else {
+                        $phpcsFile->fixer->replaceToken(($assignment - 1), $newContent);
+                    }
                 }
             }//end if
         }//end foreach

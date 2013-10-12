@@ -23,7 +23,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PSR2_Tests_ControlStructures_SwitchDeclarationUnitTest extends AbstractSniffUnitTest
@@ -43,7 +43,6 @@ class PSR2_Tests_ControlStructures_SwitchDeclarationUnitTest extends AbstractSni
         return array(
                 20 => 1,
                 23 => 1,
-                26 => 1,
                 29 => 1,
                 33 => 1,
                 37 => 1,

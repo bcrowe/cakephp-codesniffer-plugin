@@ -22,7 +22,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PSR2_Sniffs_ControlStructures_SwitchDeclarationSniff implements PHP_CodeSniffer_Sniff
@@ -90,12 +90,10 @@ class PSR2_Sniffs_ControlStructures_SwitchDeclarationSniff implements PHP_CodeSn
                              $expected,
                              $tokens[$nextCase]['content'],
                             );
-                $phpcsFile->addError($error, $nextCase, $type.'NotLower', $data);
-            }
-
-            if ($tokens[$nextCase]['column'] !== $caseAlignment) {
-                $error = strtoupper($type).' keyword must be indented '.$this->indent.' spaces from SWITCH keyword';
-                $phpcsFile->addError($error, $nextCase, $type.'Indent');
+                $phpcsFile->addFixableError($error, $nextCase, $type.'NotLower', $data);
+                if ($phpcsFile->fixer->enabled === true) {
+                    $phpcsFile->fixer->replaceToken($nextCase, $expected);
+                }
             }
 
             if ($type === 'case'
@@ -122,9 +120,17 @@ class PSR2_Sniffs_ControlStructures_SwitchDeclarationSniff implements PHP_CodeSn
                 // Only need to check some things once, even if the
                 // closer is shared between multiple case statements, or even
                 // the default case.
-                if ($tokens[$nextCloser]['column'] !== ($caseAlignment + $this->indent)) {
+                $diff = ($caseAlignment + $this->indent - $tokens[$nextCloser]['column']);
+                if ($diff !== 0) {
                     $error = 'Terminating statement must be indented to the same level as the CASE body';
-                    $phpcsFile->addError($error, $nextCloser, 'BreakIndent');
+                    $phpcsFile->addFixableError($error, $nextCloser, 'BreakIndent');
+                    if ($phpcsFile->fixer->enabled === true) {
+                        if ($diff > 0) {
+                            $phpcsFile->fixer->addContentBefore($nextCloser, str_repeat(' ', $diff));
+                        } else {
+                            $phpcsFile->fixer->substrToken(($nextCloser - 1), 0, $diff);
+                        }
+                    }
                 }
             }
 

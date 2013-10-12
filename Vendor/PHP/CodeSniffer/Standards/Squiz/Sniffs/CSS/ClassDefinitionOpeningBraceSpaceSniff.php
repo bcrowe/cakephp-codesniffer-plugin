@@ -23,7 +23,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Squiz_Sniffs_CSS_ClassDefinitionOpeningBraceSpaceSniff implements PHP_CodeSniffer_Sniff
@@ -95,18 +95,23 @@ class Squiz_Sniffs_CSS_ClassDefinitionOpeningBraceSpaceSniff implements PHP_Code
             $nested = true;
         }
 
-        $foundLines = ($tokens[$next]['line'] - $tokens[$stackPtr]['line'] - 1);
-        if ($nested === true) {
-            if ($foundLines !== 1) {
-                $error = 'Expected 1 blank line after opening brace of nesting class definition; %s found';
-                $data  = array($foundLines);
-                $phpcsFile->addError($error, $stackPtr, 'AfterNesting', $data);
-            }
+        if ($tokens[$next]['line'] === $tokens[$stackPtr]['line']) {
+            $error = 'Opening brace should be on a new line';
+            $phpcsFile->addError($error, $stackPtr, 'ContentBefore');
         } else {
-            if ($foundLines !== 0) {
-                $error = 'Expected 0 blank lines after opening brace of class definition; %s found';
-                $data  = array($foundLines);
-                $phpcsFile->addError($error, $stackPtr, 'After', $data);
+            $foundLines = ($tokens[$next]['line'] - $tokens[$stackPtr]['line'] - 1);
+            if ($nested === true) {
+                if ($foundLines !== 1) {
+                    $error = 'Expected 1 blank line after opening brace of nesting class definition; %s found';
+                    $data  = array($foundLines);
+                    $phpcsFile->addError($error, $stackPtr, 'AfterNesting', $data);
+                }
+            } else {
+                if ($foundLines !== 0) {
+                    $error = 'Expected 0 blank lines after opening brace of class definition; %s found';
+                    $data  = array($foundLines);
+                    $phpcsFile->addError($error, $stackPtr, 'After', $data);
+                }
             }
         }
 

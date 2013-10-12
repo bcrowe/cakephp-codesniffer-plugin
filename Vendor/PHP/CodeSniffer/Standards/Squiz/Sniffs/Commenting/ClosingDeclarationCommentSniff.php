@@ -24,7 +24,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Squiz_Sniffs_Commenting_ClosingDeclarationCommentSniff implements PHP_CodeSniffer_Sniff
@@ -110,12 +110,20 @@ class Squiz_Sniffs_Commenting_ClosingDeclarationCommentSniff implements PHP_Code
 
         $error = 'Expected '.$comment;
         if (isset($tokens[($closingBracket + 1)]) === false || $tokens[($closingBracket + 1)]['code'] !== T_COMMENT) {
-            $phpcsFile->addError($error, $closingBracket, 'Missing');
+            $phpcsFile->addFixableError($error, $closingBracket, 'Missing');
+            if ($phpcsFile->fixer->enabled === true) {
+                $phpcsFile->fixer->replaceToken($closingBracket, '}'.$comment.$phpcsFile->eolChar);
+            }
+
             return;
         }
 
         if (rtrim($tokens[($closingBracket + 1)]['content']) !== $comment) {
-            $phpcsFile->addError($error, $closingBracket, 'Incorrect');
+            $phpcsFile->addFixableError($error, $closingBracket, 'Incorrect');
+            if ($phpcsFile->fixer->enabled === true) {
+                $phpcsFile->fixer->replaceToken(($closingBracket + 1), $comment.$phpcsFile->eolChar);
+            }
+
             return;
         }
 

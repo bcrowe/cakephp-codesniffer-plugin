@@ -26,7 +26,7 @@
  * @copyright 2009 SQLI <www.sqli.com>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
@@ -47,14 +47,16 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
      * and FALSE if it ignored the file. Returning TRUE indicates that the file and
      * its data should be counted in the grand totals.
      *
-     * @param array   $report      Prepared report data.
-     * @param boolean $showSources Show sources?
-     * @param int     $width       Maximum allowed line width.
+     * @param array                $report      Prepared report data.
+     * @param PHP_CodeSniffer_File $phpcsFile   The file being reported on.
+     * @param boolean              $showSources Show sources?
+     * @param int                  $width       Maximum allowed line width.
      *
      * @return boolean
      */
     public function generateFileReport(
         $report,
+        PHP_CodeSniffer_File $phpcsFile,
         $showSources=false,
         $width=80
     ) {
@@ -89,6 +91,7 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
      * @param int     $totalFiles    Total number of files processed during the run.
      * @param int     $totalErrors   Total number of errors found during the run.
      * @param int     $totalWarnings Total number of warnings found during the run.
+     * @param int     $totalFixable  Total number of problems that can be fixed.
      * @param boolean $showSources   Show sources?
      * @param int     $width         Maximum allowed line width.
      * @param boolean $toScreen      Is the report being printed to screen?
@@ -100,6 +103,7 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
         $totalFiles,
         $totalErrors,
         $totalWarnings,
+        $totalFixable,
         $showSources=false,
         $width=80,
         $toScreen=true
@@ -129,6 +133,10 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
                 echo $source.str_repeat(' ', ($width - 5 - strlen($source)));
             } else {
                 $parts = explode('.', $source);
+                if ($parts[0] === 'Internal') {
+                    $parts[2] = $parts[1];
+                    $parts[1] = '';
+                }
 
                 if (strlen($parts[0]) > 8) {
                     $parts[0] = substr($parts[0], 0, ((strlen($parts[0]) - 8) * -1));
@@ -161,9 +169,22 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
         }//end foreach
 
         echo str_repeat('-', $width).PHP_EOL;
-        echo 'A TOTAL OF '.($totalErrors + $totalWarnings).' SNIFF VIOLATION(S) ';
-        echo 'WERE FOUND IN '.count($this->_sourceCache).' SOURCE(S)'.PHP_EOL;
-        echo str_repeat('-', $width).PHP_EOL.PHP_EOL;
+        echo 'A TOTAL OF '.($totalErrors + $totalWarnings).' SNIFF VIOLATION';
+        if (($totalErrors + $totalWarnings) > 1) {
+            echo 'S';
+        }
+
+        echo ' WERE FOUND IN '.count($this->_sourceCache).' SOURCE';
+        if (count($this->_sourceCache) !== 1) {
+            echo 'S';
+        }
+
+        if ($totalFixable > 0) {
+            echo PHP_EOL.str_repeat('-', $width).PHP_EOL;
+            echo 'PHPCBF CAN FIX '.$totalFixable.' OF THESE SNIFF VIOLATIONS AUTOMATICALLY';
+        }
+
+        echo PHP_EOL.str_repeat('-', $width).PHP_EOL.PHP_EOL;
 
         if ($toScreen === true
             && PHP_CODESNIFFER_INTERACTIVE === false
@@ -184,6 +205,10 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
      */
     public function makeFriendlyName($name)
     {
+        if (trim($name) === '') {
+            return '';
+        }
+
         $friendlyName = '';
         $length       = strlen($name);
 

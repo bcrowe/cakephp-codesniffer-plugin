@@ -24,7 +24,7 @@
  * @author    Marc McIntyre <mmcintyre@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Generic_Sniffs_PHP_UpperCaseConstantSniff implements PHP_CodeSniffer_Sniff
@@ -80,14 +80,18 @@ class Generic_Sniffs_PHP_UpperCaseConstantSniff implements PHP_CodeSniffer_Sniff
             return;
         }
 
-        $keyword = $tokens[$stackPtr]['content'];
-        if (strtoupper($keyword) !== $keyword) {
+        $keyword  = $tokens[$stackPtr]['content'];
+        $expected = strtoupper($keyword);
+        if ($keyword !== $expected) {
             $error = 'TRUE, FALSE and NULL must be uppercase; expected "%s" but found "%s"';
             $data  = array(
-                      strtoupper($keyword),
+                      $expected,
                       $keyword,
                      );
-            $phpcsFile->addError($error, $stackPtr, 'Found', $data);
+            $phpcsFile->addFixableError($error, $stackPtr, 'Found', $data);
+            if ($phpcsFile->fixer->enabled === true) {
+                $phpcsFile->fixer->replaceToken($stackPtr, $expected);
+            }
         }
 
     }//end process()

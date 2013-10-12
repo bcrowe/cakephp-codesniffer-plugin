@@ -22,7 +22,7 @@
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
- * @version   Release: 1.5.0RC3
+ * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 class Squiz_Sniffs_CSS_ForbiddenStylesSniff implements PHP_CodeSniffer_Sniff
@@ -166,15 +166,22 @@ class Squiz_Sniffs_CSS_ForbiddenStylesSniff implements PHP_CodeSniffer_Sniff
         }
 
         if ($this->forbiddenStyles[$pattern] !== null) {
-            $type  .= 'WithAlternative';
             $data[] = $this->forbiddenStyles[$pattern];
-            $error .= '; use %s instead';
-        }
+            if ($this->error === true) {
+                $phpcsFile->addFixableError($error.'; use %s instead', $stackPtr, $type.'WithAlternative', $data);
+            } else {
+                $phpcsFile->addFixableWarning($error.'; use %s instead', $stackPtr, $type.'WithAlternative', $data);
+            }
 
-        if ($this->error === true) {
-            $phpcsFile->addError($error, $stackPtr, $type, $data);
+            if ($phpcsFile->fixer->enabled === true) {
+                $phpcsFile->fixer->replaceToken($stackPtr, $this->forbiddenStyles[$pattern]);
+            }
         } else {
-            $phpcsFile->addWarning($error, $stackPtr, $type, $data);
+            if ($this->error === true) {
+                $phpcsFile->addError($error, $stackPtr, $type, $data);
+            } else {
+                $phpcsFile->addWarning($error, $stackPtr, $type, $data);
+            }
         }
 
     }//end addError()

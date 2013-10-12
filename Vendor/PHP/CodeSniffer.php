@@ -24,6 +24,10 @@ if (class_exists('PHP_CodeSniffer_File', true) === false) {
     throw new PHP_CodeSniffer_Exception('Class PHP_CodeSniffer_File not found');
 }
 
+if (class_exists('PHP_CodeSniffer_Fixer', true) === false) {
+    throw new PHP_CodeSniffer_Exception('Class PHP_CodeSniffer_Fixer not found');
+}
+
 if (class_exists('PHP_CodeSniffer_Tokens', true) === false) {
     throw new PHP_CodeSniffer_Exception('Class PHP_CodeSniffer_Tokens not found');
 }
@@ -169,6 +173,7 @@ class PHP_CodeSniffer
                                    'object',
                                    'string',
                                    'resource',
+                                   'callable',
                                   );
 
 
@@ -1322,6 +1327,7 @@ class PHP_CodeSniffer
         if (PHP_CODESNIFFER_INTERACTIVE === false) {
             // Cache the report data for this file so we can unset it to save memory.
             $this->reporting->cacheFileReport($phpcsFile, $cliValues);
+            $phpcsFile->cleanUp();
             return $phpcsFile;
         }
 
@@ -1399,7 +1405,6 @@ class PHP_CodeSniffer
         );
 
         $phpcsFile->start($contents);
-        $phpcsFile->cleanUp();
 
         if (PHP_CODESNIFFER_VERBOSITY > 0) {
             $timeTaken = (time() - $startTime);
