@@ -1,0 +1,27 @@
+{
+	"name": "dereuromark/cakephp-codesniffer",
+	"type": "cakephp-plugin",
+	"description": "A CakePHP to find and correct coding standard issues",
+	"keywords": ["cakephp", "plugin", "coding standards", "phpcs", "sniff"],
+	"homepage": "https://github.com/dereuromark/cakephp-codesniffer",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Mark Scherer",
+			"homepage": "http://www.dereuromark.de"
+		}
+	],
+	"require": {
+		"php": ">=5.3",
+		"composer/installers": "*"
+	},
+	"support": {
+		"source": "https://github.com/dereuromark/cakephp-codesniffer"
+	},
+	"extra": {
+		"installer-name": "CodeSniffer",
+		"installer-paths": {
+			"Plugin/CodeSniffer/": ["dereuromark/cakephp-codesniffer"]
+		}
+	}
+}
