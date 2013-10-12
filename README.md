@@ -107,6 +107,8 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 
 For details see the ruleset.xml in the `Standards` dir.
 
+Most of those added sniffs also have auto-correction included. Use it :)
+
 Note: The "correct" indentation is APP and plugin specific for me. This is the only exception from the official CakePHP
 standards and applies to all my (non core) code.
 You are free to stick to the official version using the "CakePHP" standard!
