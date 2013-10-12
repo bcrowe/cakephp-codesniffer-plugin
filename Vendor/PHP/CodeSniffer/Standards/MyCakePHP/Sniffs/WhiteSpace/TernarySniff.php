@@ -68,7 +68,6 @@ class MyCakePHP_Sniffs_WhiteSpace_TernarySniff implements PHP_CodeSniffer_Sniff 
 			}
 		}
 
-
 		// Make sure the : has the correct spacing.
 		$inlineElse = $phpcsFile->findNext(T_INLINE_ELSE, ($stackPtr + 1), null, false);
 

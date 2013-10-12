@@ -84,29 +84,17 @@ class CakePHP_Sniffs_WhiteSpace_OperatorSpacingSniff implements PHP_CodeSniffer_
 				// Check there is one space before the & operator.
 				if ($tokens[($stackPtr - 1)]['code'] !== T_WHITESPACE) {
 					$error = 'Expected 1 space before "&" operator; 0 found';
-					$phpcsFile->addError($error, $stackPtr, 'NoSpaceBeforeAmp');
-				} else {
-					if (strlen($tokens[($stackPtr - 1)]['content']) !== 1) {
-						$found = strlen($tokens[($stackPtr - 1)]['content']);
-						$error = 'Expected 1 space before "&" operator; %s found';
-						$data = array($found);
-						$phpcsFile->addError($error, $stackPtr, 'SpacingBeforeAmp', $data);
-					}
+					$phpcsFile->addFixableError($error, $stackPtr, 'NoSpaceBeforeAmp');
+					$phpcsFile->fixer->addContent($stackPtr - 1, ' ');
 				}
 
 				// Check there is one space after the & operator.
 				if ($tokens[($stackPtr + 1)]['code'] !== T_WHITESPACE) {
 					$error = 'Expected 1 space after "&" operator; 0 found';
-					$phpcsFile->addError($error, $stackPtr, 'NoSpaceAfterAmp');
-				} else {
-					if (strlen($tokens[($stackPtr + 1)]['content']) !== 1) {
-						$found = strlen($tokens[($stackPtr + 1)]['content']);
-						$error = 'Expected 1 space after "&" operator; %s found';
-						$data = array($found);
-						$phpcsFile->addError($error, $stackPtr, 'SpacingAfterAmp', $data);
-					}
+					$phpcsFile->addFixableError($error, $stackPtr, 'NoSpaceAfterAmp');
+					$phpcsFile->fixer->addContent($stackPtr, ' ');
 				}
-			}//end if
+			}
 		} else {
 			if ($tokens[$stackPtr]['code'] === T_MINUS) {
 				// Check minus spacing, but make sure we aren't just assigning
@@ -152,36 +140,16 @@ class CakePHP_Sniffs_WhiteSpace_OperatorSpacingSniff implements PHP_CodeSniffer_
 
 			$operator = $tokens[$stackPtr]['content'];
 
-			$content = str_replace("\r\n", "\n", $tokens[($stackPtr - 1)]['content']);
 			if ($tokens[($stackPtr - 1)]['code'] !== T_WHITESPACE) {
 				$error = "Expected 1 space before \"$operator\"; 0 found";
-				$phpcsFile->addError($error, $stackPtr, 'NoSpaceBefore');
-			} elseif (strlen($content) !== 1) {
-				// Don't throw an error for assignments, because other standards allow
-				// multiple spaces there to align multiple assignments.
-				if (in_array($tokens[$stackPtr]['code'], PHP_CodeSniffer_Tokens::$assignmentTokens) === false) {
-					$found = strlen($content);
-					$error = 'Expected 1 space before "%s"; %s found';
-					$data = array(
-						$operator,
-						$found,
-					);
-					$phpcsFile->addError($error, $stackPtr, 'SpacingBefore', $data);
-				}
+				$phpcsFile->addFixableError($error, $stackPtr, 'NoSpaceBefore');
+				$phpcsFile->fixer->addContent($stackPtr - 1, ' ');
 			}
 
-			$content = str_replace("\r\n", "\n", $tokens[($stackPtr + 1)]['content']);
 			if ($tokens[($stackPtr + 1)]['code'] !== T_WHITESPACE) {
 				$error = "Expected 1 space after \"$operator\"; 0 found";
-				$phpcsFile->addError($error, $stackPtr, 'NoSpaceAfter');
-			} elseif (strlen($content) !== 1) {
-				$found = strlen($content);
-				$error = 'Expected 1 space after "%s"; %s found';
-				$data = array(
-					$operator,
-					$found,
-				);
-				$phpcsFile->addError($error, $stackPtr, 'SpacingAfter', $data);
+				$phpcsFile->addFixableError($error, $stackPtr, 'NoSpaceAfter');
+				$phpcsFile->fixer->addContent($stackPtr, ' ');
 			}
 		}
 	}
