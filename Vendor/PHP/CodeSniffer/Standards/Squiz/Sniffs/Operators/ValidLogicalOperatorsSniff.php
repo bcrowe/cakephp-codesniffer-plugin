@@ -74,7 +74,7 @@ class Squiz_Sniffs_Operators_ValidLogicalOperatorsSniff implements PHP_CodeSniff
 
         $error = 'Logical operator "%s" is prohibited; use "%s" instead';
         $data  = array(
-                  $operator,
+                  $tokens[$stackPtr]['content'],
                   $replacements[$operator],
                  );
         $fix = $phpcsFile->addFixableError($error, $stackPtr, 'NotAllowed', $data);

@@ -61,12 +61,16 @@
 
 	<rule ref="Generic.PHP.DeprecatedFunctions"/>
 	<rule ref="Squiz.PHP.DisallowSizeFunctionsInLoops"/>
-	<rule ref="Generic.PHP.DisallowShortOpenTag"/>
 	<rule ref="Squiz.PHP.Eval"/>
 	<rule ref="Generic.PHP.ForbiddenFunctions"/>
 	<rule ref="Squiz.PHP.NonExecutableCode"/>
 	<rule ref="Generic.PHP.NoSilencedErrors"/>
 	<rule ref="Generic.PHP.LowerCaseConstant"/>
+	<rule ref="CakePHP.PHP.DisallowShortOpenTag"/>
+	<rule ref="MyCakePHP.PHP.TypeCasting"/>
+	<rule ref="MyCakePHP.PHP.IsWritable"/>
+	<rule ref="MyCakePHP.PHP.IsNull"/>
+	<rule ref="MyCakePHP.PHP.IsInt"/>
 
 	<rule ref="CakePHP.Strings.ConcatenationSpacing"/>
 
@@ -90,6 +94,7 @@
 	<rule ref="CakePHP.WhiteSpace.ScopeClosingBrace"/>
 	<rule ref="CakePHP.WhiteSpace.TabAndSpace"/>
 	<rule ref="CakePHP.WhiteSpace.CommaSpacing"/>
+	<rule ref="MyCakePHP.WhiteSpace.Ternary"/>
 
 	<!-- All rules in ./Sniffs are included automatically -->
 </ruleset>
