@@ -641,7 +641,7 @@ class CodeSnifferShell extends AppShell {
 				if ($numErrors === 0) {
 					// And no errors reported.
 					$exit = 0;
-			 	} else {
+				} else {
 					// Errors we can't fix.
 					$exit = 2;
 				}
