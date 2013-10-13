@@ -637,7 +637,7 @@ class CodeSnifferShell extends AppShell {
 
 		if ($this->params['fix']) {
 			if (file_exists($diffFile) === false) {
-		    // Nothing to fix.
+				// Nothing to fix.
 				if ($numErrors === 0) {
 					// And no errors reported.
 					$exit = 0;
