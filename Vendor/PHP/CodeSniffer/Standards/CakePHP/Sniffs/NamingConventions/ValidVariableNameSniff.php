@@ -114,7 +114,8 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
 		if ($this->_isValidVar($varName) === false) {
 			$error = 'Variable "%s" is not in valid camel caps format';
 			$data = array($originalVarName);
-			$phpcsFile->addError($error, $stackPtr, 'NotCamelCaps', $data);
+			$phpcsFile->addFixableError($error, $stackPtr, 'NotCamelCaps', $data);
+			$this->_correct($phpcsFile, $stackPtr, $originalVarName);
 		}
 	}
 
@@ -255,6 +256,29 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
 			return false;
 		}
 		return true;
+	}
+
+/**
+ * CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff::_correct()
+ *
+ * @param PHP_CodeSniffer_File $phpcsFile
+ * @param integer $stackPtr Current position.
+ * @param string $originalName Variable name without leading $ sign.
+ * @return void
+ */
+	protected function _correct($phpcsFile, $stackPtr, $originalName) {
+		if ($phpcsFile->fixer->enabled !== true) {
+			return;
+		}
+		//$variableName = ltrim($originalName, '$');
+		$variableName = ltrim($originalName, '_');
+		$underscores = strlen($originalName) - strlen($variableName);
+		$variableName = lcfirst(Inflector::camelize($variableName));
+
+		if ($underscores) {
+			$variableName = str_repeat('_', $underscores) . $variableName;
+		}
+		$phpcsFile->fixer->replaceToken($stackPtr, '$' . $variableName);
 	}
 
 }
