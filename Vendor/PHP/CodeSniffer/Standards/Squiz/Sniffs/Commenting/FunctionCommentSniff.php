@@ -159,7 +159,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
             $error = 'You must use "*/" to end a function comment; found "%s"';
             $phpcsFile->addError($error, $commentEnd, 'WrongEnd', array(trim($tokens[$commentEnd]['content'])));
             return;
-        }
+        }//end if
 
         // If there is any code between the function keyword and the doc block
         // then the doc block is not for us.
@@ -443,7 +443,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
                                     $this->currentFile->addError($error, $errorPos, 'InvalidReturnVoid');
                                 }
                             }
-                        }
+                        }//end if
                     } else if ($content !== 'mixed') {
                         // If return type is not void, there needs to be a
                         // returns statement somewhere in the function that
@@ -632,7 +632,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
                                  );
                         $this->currentFile->addError($error, $errorPos, 'ParameterCommentsNotAligned', $data);
                     }
-                }
+                }//end if
 
                 // Variable must be one of the supported standard type.
                 $typeNames = explode('|', $param->getType());
@@ -689,7 +689,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
                                          );
                                 $this->currentFile->addError($error, ($commentEnd + 2), 'InvalidTypeHint', $data);
                             }
-                        }
+                        }//end if
                     }//end if
                 }//end foreach
 
@@ -726,7 +726,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
                     // We must have an extra parameter comment.
                     $error = 'Superfluous doc comment at position '.$pos;
                     $this->currentFile->addError($error, $errorPos, 'ExtraParamComment');
-                }
+                }//end if
 
                 if ($param->getVarName() === '') {
                     $error = 'Missing parameter name at position '.$pos;
@@ -759,7 +759,7 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
                         $error = 'Param comment must end with a full stop';
                         $this->currentFile->addError($error, $errorPos, 'ParamCommentFullStop');
                     }
-                }
+                }//end if
 
                 $previousParam = $param;
 
@@ -809,14 +809,8 @@ class Squiz_Sniffs_Commenting_FunctionCommentSniff implements PHP_CodeSniffer_Sn
      */
     protected function processUnknownTags($commentStart, $commentEnd)
     {
-        $unknownTags = $this->commentParser->getUnknown();
-        foreach ($unknownTags as $errorTag) {
-            $error = '@%s tag is not allowed in function comment';
-            $data  = array($errorTag['tag']);
-            $this->currentFile->addWarning($error, ($commentStart + $errorTag['line']), 'TagNotAllowed', $data);
-        }
 
-    }//end processUnknownTags
+    }//end processUnknownTags()
 
 
 }//end class

@@ -281,7 +281,13 @@ class PHP_CodeSniffer_CLI
             $values['warningSeverity'] = null;
             break;
         default:
-            $values = $this->processUnknownArgument('-'.$arg, $pos, $values);
+            if ($this->dieOnUnknownArg === false) {
+                $values[$arg] = $arg;
+            } else {
+                echo 'ERROR: option "'.$arg.'" not known.'.PHP_EOL.PHP_EOL;
+                $this->printUsage();
+                exit(2);
+            }
         }//end switch
 
         return $values;
@@ -307,8 +313,9 @@ class PHP_CodeSniffer_CLI
             exit(0);
             break;
         case 'version':
-            echo 'PHP_CodeSniffer version @package_version@ (@package_state@) ';
-            echo 'by Squiz Pty Ltd. (http://www.squiz.com.au)'.PHP_EOL;
+            $phpcs = new PHP_CodeSniffer();
+            echo 'PHP_CodeSniffer version '.$phpcs::VERSION.' ('.$phpcs::STABILITY.') ';
+            echo 'by Squiz (http://www.squiz.net)'.PHP_EOL;
             exit(0);
             break;
         case 'config-set':
@@ -329,16 +336,8 @@ class PHP_CodeSniffer_CLI
             break;
         default:
             if (substr($arg, 0, 7) === 'sniffs=') {
-                $values['sniffs'] = array();
-
                 $sniffs = substr($arg, 7);
-                $sniffs = explode(',', $sniffs);
-
-                // Convert the sniffs to class names.
-                foreach ($sniffs as $sniff) {
-                    $parts = explode('.', strtolower($sniff));
-                    $values['sniffs'][] = $parts[0].'_sniffs_'.$parts[1].'_'.$parts[2].'sniff';
-                }
+                $values['sniffs'] = explode(',', $sniffs);
             } else if (substr($arg, 0, 12) === 'report-file=') {
                 $values['reportFile'] = realpath(substr($arg, 12));
 
@@ -404,32 +403,14 @@ class PHP_CodeSniffer_CLI
                     // This is a single report.
                     $report = substr($arg, 7);
                     $output = null;
-                }
-
-                $validReports = array(
-                                 'full',
-                                 'xml',
-                                 'json',
-                                 'checkstyle',
-                                 'csv',
-                                 'diff',
-                                 'emacs',
-                                 'notifysend',
-                                 'source',
-                                 'summary',
-                                 'svnblame',
-                                 'gitblame',
-                                 'hgblame',
-                                );
-
-                if (in_array($report, $validReports) === false) {
-                    echo 'ERROR: Report type "'.$report.'" not known.'.PHP_EOL;
-                    exit(2);
-                }
+                }//end if
 
                 $values['reports'][$report] = $output;
             } else if (substr($arg, 0, 9) === 'standard=') {
-                $values['standard'] = explode(',', substr($arg, 9));
+                $standards = trim(substr($arg, 9));
+                if ($standards !== '') {
+                    $values['standard'] = explode(',', $standards);
+                }
             } else if (substr($arg, 0, 11) === 'extensions=') {
                 $values['extensions'] = explode(',', substr($arg, 11));
             } else if (substr($arg, 0, 9) === 'severity=') {
@@ -456,7 +437,20 @@ class PHP_CodeSniffer_CLI
             } else if (substr($arg, 0, 10) === 'tab-width=') {
                 $values['tabWidth'] = (int) substr($arg, 10);
             } else {
-                $values = $this->processUnknownArgument('--'.$arg, $pos, $values);
+                if ($this->dieOnUnknownArg === false) {
+                    $eqPos = strpos($arg, '=');
+                    if ($eqPos === false) {
+                        $values[$arg] = $arg;
+                    } else {
+                        $value = substr($arg, ($eqPos + 1));
+                        $arg   = substr($arg, 0, $eqPos);
+                        $values[$arg] = $value;
+                    }
+                } else {
+                    echo 'ERROR: option "'.$arg.'" not known.'.PHP_EOL.PHP_EOL;
+                    $this->printUsage();
+                    exit(2);
+                }
             }//end if
 
             break;
@@ -481,17 +475,6 @@ class PHP_CodeSniffer_CLI
      */
     public function processUnknownArgument($arg, $pos, $values)
     {
-        // We don't know about any additional switches; just files.
-        if ($arg{0} === '-') {
-            if ($this->dieOnUnknownArg === false) {
-                return $values;
-            }
-
-            echo 'ERROR: option "'.$arg.'" not known.'.PHP_EOL.PHP_EOL;
-            $this->printUsage();
-            exit(2);
-        }
-
         $file = realpath($arg);
         if (file_exists($file) === false) {
             if ($this->dieOnUnknownArg === false) {
@@ -809,11 +792,27 @@ class PHP_CodeSniffer_CLI
 
 
     /**
-     * Prints out the usage information for this script.
+     * Prints out the usage information for the current script.
      *
      * @return void
      */
     public function printUsage()
+    {
+        if (defined('PHP_CODESNIFFER_CBF') === true && PHP_CODESNIFFER_CBF === true) {
+            $this->printPHPCBFUsage();
+        } else {
+            $this->printPHPCSUsage();
+        }
+
+    }//end printUsage()
+
+
+    /**
+     * Prints out the usage information for PHPCS.
+     *
+     * @return void
+     */
+    public function printPHPCSUsage()
     {
         echo 'Usage: phpcs [-nwlsaepvi] [-d key[=value]]'.PHP_EOL;
         echo '    [--report=<report>] [--report-file=<reportFile>] [--report-<report>=<reportFile>] ...'.PHP_EOL;
@@ -835,25 +834,63 @@ class PHP_CodeSniffer_CLI
         echo '        --help        Print this help message'.PHP_EOL;
         echo '        --version     Print version information'.PHP_EOL;
         echo '        <file>        One or more files and/or directories to check'.PHP_EOL;
+        echo '        <encoding>    The encoding of the files being checked (default is iso-8859-1)'.PHP_EOL;
         echo '        <extensions>  A comma separated list of file extensions to check'.PHP_EOL;
         echo '                      (only valid if checking a directory)'.PHP_EOL;
-        echo '        <patterns>    A comma separated list of patterns to ignore files and directories'.PHP_EOL;
-        echo '        <encoding>    The encoding of the files being checked (default is iso-8859-1)'.PHP_EOL;
-        echo '        <sniffs>      A comma separated list of sniff codes to limit the check to'.PHP_EOL;
-        echo '                      (all sniffs must be part of the specified standard)'.PHP_EOL;
-        echo '        <severity>    The minimum severity required to display an error or warning'.PHP_EOL;
-        echo '        <standard>    The name or path of the coding standard to use'.PHP_EOL;
-        echo '        <tabWidth>    The number of spaces each tab represents'.PHP_EOL;
         echo '        <generator>   The name of a doc generator to use'.PHP_EOL;
         echo '                      (forces doc generation instead of checking)'.PHP_EOL;
+        echo '        <patterns>    A comma separated list of patterns to ignore files and directories'.PHP_EOL;
         echo '        <report>      Print either the "full", "xml", "checkstyle", "csv"'.PHP_EOL;
         echo '                      "json", "emacs", "source", "summary", "diff"'.PHP_EOL;
         echo '                      "svnblame", "gitblame", "hgblame" or "notifysend" report'.PHP_EOL;
         echo '                      (the "full" report is printed by default)'.PHP_EOL;
         echo '        <reportFile>  Write the report to the specified file path'.PHP_EOL;
         echo '        <reportWidth> How many columns wide screen reports should be printed'.PHP_EOL;
+        echo '        <sniffs>      A comma separated list of sniff codes to limit the check to'.PHP_EOL;
+        echo '                      (all sniffs must be part of the specified standard)'.PHP_EOL;
+        echo '        <severity>    The minimum severity required to display an error or warning'.PHP_EOL;
+        echo '        <standard>    The name or path of the coding standard to use'.PHP_EOL;
+        echo '        <tabWidth>    The number of spaces each tab represents'.PHP_EOL;
 
-    }//end printUsage()
+    }//end printPHPCSUsage()
+
+
+    /**
+     * Prints out the usage information for PHPCBF.
+     *
+     * @return void
+     */
+    public function printPHPCBFUsage()
+    {
+        echo 'Usage: phpcbf [-nwlpvi] [-d key[=value]]'.PHP_EOL;
+        echo '    [--standard=<standard>] [--sniffs=<sniffs>] [--suffix=<suffix>]'.PHP_EOL;
+        echo '    [--severity=<severity>] [--error-severity=<severity>] [--warning-severity=<severity>]'.PHP_EOL;
+        echo '    [--tab-width=<tabWidth>] [--encoding=<encoding>]'.PHP_EOL;
+        echo '    [--extensions=<extensions>] [--ignore=<patterns>] <file> ...'.PHP_EOL;
+        echo '        -n            Do not fix warnings (shortcut for --warning-severity=0)'.PHP_EOL;
+        echo '        -w            Fix both warnings and errors (on by default)'.PHP_EOL;
+        echo '        -l            Local directory only, no recursion'.PHP_EOL;
+        echo '        -p            Show progress of the run'.PHP_EOL;
+        echo '        -v[v][v]      Print verbose output'.PHP_EOL;
+        echo '        -i            Show a list of installed coding standards'.PHP_EOL;
+        echo '        -d            Set the [key] php.ini value to [value] or [true] if value is omitted'.PHP_EOL;
+        echo '        --help        Print this help message'.PHP_EOL;
+        echo '        --version     Print version information'.PHP_EOL;
+        echo '        --no-patch    Do not make use of the "diff" or "patch" programs'.PHP_EOL;
+        echo '        <file>        One or more files and/or directories to fix'.PHP_EOL;
+        echo '        <encoding>    The encoding of the files being fixed (default is iso-8859-1)'.PHP_EOL;
+        echo '        <extensions>  A comma separated list of file extensions to fix'.PHP_EOL;
+        echo '                      (only valid if fixing a directory)'.PHP_EOL;
+        echo '        <patterns>    A comma separated list of patterns to ignore files and directories'.PHP_EOL;
+        echo '        <sniffs>      A comma separated list of sniff codes to limit the fixes to'.PHP_EOL;
+        echo '                      (all sniffs must be part of the specified standard)'.PHP_EOL;
+        echo '        <severity>    The minimum severity required to fix an error or warning'.PHP_EOL;
+        echo '        <standard>    The name or path of the coding standard to use'.PHP_EOL;
+        echo '        <suffix>      Write modified files to a filename using this suffix'.PHP_EOL;
+        echo '                      ("diff" and "patch" are not used in this mode)'.PHP_EOL;
+        echo '        <tabWidth>    The number of spaces each tab represents'.PHP_EOL;
+
+    }//end printPHPCBFUsage()
 
 
     /**

@@ -107,13 +107,38 @@ class PEAR_Sniffs_Functions_FunctionCallSignatureSniff implements PHP_CodeSniffe
         }
 
         // Check if this is a single line or multi-line function call.
-        if ($tokens[$openBracket]['line'] === $tokens[$closeBracket]['line']) {
-            $this->processSingleLineCall($phpcsFile, $stackPtr, $openBracket, $tokens);
-        } else {
+        if ($this->isMultiLineCall($phpcsFile, $stackPtr, $openBracket, $tokens) === true) {
             $this->processMultiLineCall($phpcsFile, $stackPtr, $openBracket, $tokens);
+        } else {
+            $this->processSingleLineCall($phpcsFile, $stackPtr, $openBracket, $tokens);
         }
 
     }//end process()
+
+
+    /**
+     * Processes single-line calls.
+     *
+     * @param PHP_CodeSniffer_File $phpcsFile   The file being scanned.
+     * @param int                  $stackPtr    The position of the current token
+     *                                          in the stack passed in $tokens.
+     * @param int                  $openBracket The position of the opening bracket
+     *                                          in the stack passed in $tokens.
+     * @param array                $tokens      The stack of tokens that make up
+     *                                          the file.
+     *
+     * @return void
+     */
+    public function isMultiLineCall(PHP_CodeSniffer_File $phpcsFile, $stackPtr, $openBracket, $tokens)
+    {
+        $closeBracket = $tokens[$openBracket]['parenthesis_closer'];
+        if ($tokens[$openBracket]['line'] !== $tokens[$closeBracket]['line']) {
+            return true;
+        }
+
+        return false;
+
+    }//end isMultiLineCall()
 
 
     /**
@@ -189,8 +214,8 @@ class PEAR_Sniffs_Functions_FunctionCallSignatureSniff implements PHP_CodeSniffe
 
         if ($tokens[($openBracket + 1)]['content'] !== $phpcsFile->eolChar) {
             $error = 'Opening parenthesis of a multi-line function call must be the last content on the line';
-            $phpcsFile->addFixableError($error, $stackPtr, 'ContentAfterOpenBracket');
-            if ($phpcsFile->fixer->enabled === true) {
+            $fix   = $phpcsFile->addFixableError($error, $stackPtr, 'ContentAfterOpenBracket');
+            if ($fix === true && $phpcsFile->fixer->enabled === true) {
                 $phpcsFile->fixer->addContent(
                     $openBracket,
                     $phpcsFile->eolChar.str_repeat(' ', ($functionIndent + $this->indent))
@@ -202,8 +227,8 @@ class PEAR_Sniffs_Functions_FunctionCallSignatureSniff implements PHP_CodeSniffe
         $prev         = $phpcsFile->findPrevious(T_WHITESPACE, ($closeBracket - 1), null, true);
         if ($tokens[$prev]['line'] === $tokens[$closeBracket]['line']) {
             $error = 'Closing parenthesis of a multi-line function call must be on a line by itself';
-            $phpcsFile->addFixableError($error, $closeBracket, 'CloseBracketLine');
-            if ($phpcsFile->fixer->enabled === true) {
+            $fix   = $phpcsFile->addFixableError($error, $closeBracket, 'CloseBracketLine');
+            if ($fix === true && $phpcsFile->fixer->enabled === true) {
                 $phpcsFile->fixer->addContentBefore(
                     $closeBracket,
                     $phpcsFile->eolChar.str_repeat(' ', ($functionIndent + $this->indent))
@@ -243,8 +268,8 @@ class PEAR_Sniffs_Functions_FunctionCallSignatureSniff implements PHP_CodeSniffe
                     if ($tokens[$nextCode]['line'] !== $lastLine) {
                         if ($exact === true) {
                             $error = 'Empty lines are not allowed in multi-line function calls';
-                            $phpcsFile->addFixableError($error, $i, 'EmptyLine');
-                            if ($phpcsFile->fixer->enabled === true) {
+                            $fix   = $phpcsFile->addFixableError($error, $i, 'EmptyLine');
+                            if ($fix === true && $phpcsFile->fixer->enabled === true) {
                                 $phpcsFile->fixer->replaceToken($i, '');
                             }
                         }
@@ -293,9 +318,9 @@ class PEAR_Sniffs_Functions_FunctionCallSignatureSniff implements PHP_CodeSniffe
                               $expectedIndent,
                               $foundIndent,
                              );
-                    $phpcsFile->addFixableError($error, $i, 'Indent', $data);
 
-                    if ($phpcsFile->fixer->enabled === true) {
+                    $fix = $phpcsFile->addFixableError($error, $i, 'Indent', $data);
+                    if ($fix === true && $phpcsFile->fixer->enabled === true) {
                         $padding = str_repeat(' ', $expectedIndent);
                         if ($foundIndent === 0) {
                             $phpcsFile->fixer->addContentBefore($i, $padding);

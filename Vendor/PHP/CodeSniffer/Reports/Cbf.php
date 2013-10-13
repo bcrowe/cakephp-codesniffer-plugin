@@ -1,35 +1,39 @@
 <?php
 /**
- * Xml report for PHP_CodeSniffer.
+ * CBF report for PHP_CodeSniffer.
+ *
+ * This report implements the various auto-fixing features of the
+ * PHPCBF script and is not intended (or allowed) to be selected as a
+ * report from the command line.
  *
  * PHP version 5
  *
  * @category  PHP
  * @package   PHP_CodeSniffer
- * @author    Gabriele Santini <gsantini@sqli.com>
  * @author    Greg Sherwood <gsherwood@squiz.net>
- * @copyright 2009 SQLI <www.sqli.com>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
 
 /**
- * Xml report for PHP_CodeSniffer.
+ * CBF report for PHP_CodeSniffer.
+ *
+ * This report implements the various auto-fixing features of the
+ * PHPCBF script and is not intended (or allowed) to be selected as a
+ * report from the command line.
  *
  * PHP version 5
  *
  * @category  PHP
  * @package   PHP_CodeSniffer
- * @author    Gabriele Santini <gsantini@sqli.com>
  * @author    Greg Sherwood <gsherwood@squiz.net>
- * @copyright 2009 SQLI <www.sqli.com>
  * @copyright 2006-2012 Squiz Pty Ltd (ABN 77 084 670 600)
  * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
-class PHP_CodeSniffer_Reports_Xml implements PHP_CodeSniffer_Report
+class PHP_CodeSniffer_Reports_Cbf implements PHP_CodeSniffer_Report
 {
 
 
@@ -53,51 +57,38 @@ class PHP_CodeSniffer_Reports_Xml implements PHP_CodeSniffer_Report
         $showSources=false,
         $width=80
     ) {
-        $out = new XMLWriter;
-        $out->openMemory();
-        $out->setIndent(true);
+        $cliValues = $phpcsFile->phpcs->cli->getCommandLineValues();
+        $changed   = $phpcsFile->fixer->fixFile();
 
-        if ($report['errors'] === 0 && $report['warnings'] === 0) {
-            // Nothing to print.
-            return false;
+        if ($report['filename'] === 'STDIN') {
+            // Replacing STDIN, so output current file to STDOUT
+            // even if nothing was fixed. Exit here because we
+            // can't process any more than 1 file in this setup.
+            echo $phpcsFile->fixer->getContents();
+            ob_end_flush();
+            exit(1);
         }
 
-        $out->startElement('file');
-        $out->writeAttribute('name', $report['filename']);
-        $out->writeAttribute('errors', $report['errors']);
-        $out->writeAttribute('warnings', $report['warnings']);
-        $out->writeAttribute('fixable', $report['fixable']);
+        if ($changed === true) {
+            $newFilename = $report['filename'].$cliValues['phpcbf-suffix'];
+            $newContent  = $phpcsFile->fixer->getContents();
+            file_put_contents($newFilename, $newContent);
 
-        foreach ($report['messages'] as $line => $lineErrors) {
-            foreach ($lineErrors as $column => $colErrors) {
-                foreach ($colErrors as $error) {
-                    $error['type'] = strtolower($error['type']);
-                    if (PHP_CODESNIFFER_ENCODING !== 'utf-8') {
-                        $error['message'] = iconv(PHP_CODESNIFFER_ENCODING, 'utf-8', $error['message']);
-                    }
-
-                    $out->startElement($error['type']);
-                    $out->writeAttribute('line', $line);
-                    $out->writeAttribute('column', $column);
-                    $out->writeAttribute('source', $error['source']);
-                    $out->writeAttribute('severity', $error['severity']);
-                    $out->writeAttribute('fixable', (int) $error['fixable']);
-                    $out->text($error['message']);
-                    $out->endElement();
-                }
+            echo 'Fixed '.$report['fixable'].' sniff violations in '.$report['filename'].PHP_EOL;
+            if ($newFilename === $report['filename']) {
+                echo "\t=> file was overwritten".PHP_EOL;
+            } else {
+                echo "\t=> fixed file written to ".basename($newFilename).PHP_EOL;
             }
-        }//end foreach
+        }
 
-        $out->endElement();
-        echo $out->flush();
-
-        return true;
+        return $changed;
 
     }//end generateFileReport()
 
 
     /**
-     * Prints all violations for processed files, in a proprietary XML format.
+     * Prints all errors and warnings for each file processed.
      *
      * @param string  $cachedData    Any partial report data that was returned from
      *                               generateFileReport during the run.
@@ -121,11 +112,8 @@ class PHP_CodeSniffer_Reports_Xml implements PHP_CodeSniffer_Report
         $width=80,
         $toScreen=true
     ) {
-        $phpcs = new PHP_CodeSniffer;
-        echo '<?xml version="1.0" encoding="UTF-8"?>'.PHP_EOL;
-        echo '<phpcs version="'.$phpcs::VERSION.'">'.PHP_EOL;
         echo $cachedData;
-        echo '</phpcs>'.PHP_EOL;
+        echo "Fixed $totalFiles files".PHP_EOL;
 
     }//end generate()
 

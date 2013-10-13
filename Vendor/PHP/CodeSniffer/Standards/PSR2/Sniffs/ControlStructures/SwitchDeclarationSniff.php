@@ -29,10 +29,10 @@ class PSR2_Sniffs_ControlStructures_SwitchDeclarationSniff implements PHP_CodeSn
 {
 
     /**
-    * The number of spaces code should be indented.
-    *
-    * @var int
-    */
+     * The number of spaces code should be indented.
+     *
+     * @var int
+     */
     public $indent = 4;
 
 
@@ -90,8 +90,9 @@ class PSR2_Sniffs_ControlStructures_SwitchDeclarationSniff implements PHP_CodeSn
                              $expected,
                              $tokens[$nextCase]['content'],
                             );
-                $phpcsFile->addFixableError($error, $nextCase, $type.'NotLower', $data);
-                if ($phpcsFile->fixer->enabled === true) {
+
+                $fix = $phpcsFile->addFixableError($error, $nextCase, $type.'NotLower', $data);
+                if ($fix === true && $phpcsFile->fixer->enabled === true) {
                     $phpcsFile->fixer->replaceToken($nextCase, $expected);
                 }
             }
@@ -101,14 +102,20 @@ class PSR2_Sniffs_ControlStructures_SwitchDeclarationSniff implements PHP_CodeSn
                 || $tokens[($nextCase + 1)]['content'] !== ' ')
             ) {
                 $error = 'CASE keyword must be followed by a single space';
-                $phpcsFile->addError($error, $nextCase, 'SpacingAfterCase');
+                $fix   = $phpcsFile->addFixableError($error, $nextCase, 'SpacingAfterCase');
+                if ($fix === true && $phpcsFile->fixer->enabled === true) {
+                    $phpcsFile->fixer->addContent($nextCase, ' ');
+                }
             }
 
             $opener = $tokens[$nextCase]['scope_opener'];
             if ($tokens[$opener]['code'] === T_COLON) {
                 if ($tokens[($opener - 1)]['code'] === T_WHITESPACE) {
                     $error = 'There must be no space before the colon in a '.strtoupper($type).' statement';
-                    $phpcsFile->addError($error, $nextCase, 'SpaceBeforeColon'.$type);
+                    $fix   = $phpcsFile->addFixableError($error, $nextCase, 'SpaceBeforeColon'.strtoupper($type));
+                    if ($fix === true && $phpcsFile->fixer->enabled === true) {
+                        $phpcsFile->fixer->replaceToken(($opener - 1), '');
+                    }
                 }
             } else {
                 $error = strtoupper($type).' statements must not be defined using curly braces';
@@ -123,8 +130,8 @@ class PSR2_Sniffs_ControlStructures_SwitchDeclarationSniff implements PHP_CodeSn
                 $diff = ($caseAlignment + $this->indent - $tokens[$nextCloser]['column']);
                 if ($diff !== 0) {
                     $error = 'Terminating statement must be indented to the same level as the CASE body';
-                    $phpcsFile->addFixableError($error, $nextCloser, 'BreakIndent');
-                    if ($phpcsFile->fixer->enabled === true) {
+                    $fix   = $phpcsFile->addFixableError($error, $nextCloser, 'BreakIndent');
+                    if ($fix === true && $phpcsFile->fixer->enabled === true) {
                         if ($diff > 0) {
                             $phpcsFile->fixer->addContentBefore($nextCloser, str_repeat(' ', $diff));
                         } else {

@@ -304,13 +304,12 @@ class CodeSnifferShell extends AppShell {
 			$this->error('This needs the Tools plugin');
 		}
 		$this->out('Downloading latest CodeSniffer package');
-		//$file = 'https://github.com/squizlabs/PHP_CodeSniffer/archive/phpcs-fixer.zip';
-		$feed = 'http://pear.php.net/feeds/pkg_php_codesniffer.rss';
-		$version = $this->_downloadCodeSniffer($feed);
+		$file = 'https://codeload.github.com/squizlabs/PHP_CodeSniffer/zip/phpcs-fixer';
+		//$feed = 'http://pear.php.net/feeds/pkg_php_codesniffer.rss';
+		$version = $this->_downloadCodeSniffer($file);
 
 		$this->out('Downloading latest CakePHP rules');
-		//$file = 'https://github.com/cakephp/cakephp-codesniffer/archive/master.zip';
-		$file = 'https://codeload.github.com/cakephp/cakephp-codesniffer/zip/master';
+		$file = 'https://codeload.github.com/cakephp/cakephp-codesniffer/zip/phpcs-fixer';
 		$this->_downloadRules($file);
 
 		$target = CakePlugin::path('CodeSniffer') . 'Vendor' . DS . 'PHP' . DS;
@@ -318,10 +317,10 @@ class CodeSnifferShell extends AppShell {
 
 		$this->out('Installing CodeSniffer package');
 		$this->out('Manually copy the tmp files into your vendors folder!');
-		//$this->out('Installing PHP Codesniffer ' . $version);
-		//$this->_installCodeSniffer($target);
+		$this->out('Installing PHP Codesniffer (phpcs-fixer branch)');
+		$this->_installCodeSniffer($target);
 
-		$this->out('Installing CakePHP rules');
+		$this->out('Installing CakePHP rules (phpcs-fixer branch)');
 		$this->_installRules($rulesTarget);
 
 		//$this->out('Removing tmp folder', 1, Shell::VERBOSE);
@@ -330,6 +329,12 @@ class CodeSnifferShell extends AppShell {
 		$this->out('Installation complete :)');
 	}
 
+	/**
+	 * CodeSnifferShell::_extract()
+	 *
+	 * @param mixed $file
+	 * @return void
+	 */
 	protected function _extract($file) {
 		chdir(dirname($file));
 
@@ -351,22 +356,56 @@ class CodeSnifferShell extends AppShell {
 		}
 	}
 
+	/**
+	 * CodeSnifferShell::_extractZip()
+	 *
+	 * @param mixed $file
+	 * @return boolean Success
+	 */
 	protected function _extractZip($file) {
 		$Zip = new ZipArchive();
 		if (!$Zip->open($file)) {
 			$this->error('Cannot open zile file' . $file);
 		}
-    $Zip->extractTo(dirname($file));
-    $Zip->close();
-    return true;
+		$Zip->extractTo(dirname($file));
+		$Zip->close();
+		return true;
 	}
 
+	/**
+	 * CodeSnifferShell::_installCodeSniffer()
+	 *
+	 * @param mixed $target
+	 * @return boolean Success
+	 */
 	protected function _installCodeSniffer($target) {
 		$tmp = TMP . 'cs' . DS;
-		$this->_extract($tmp . 'cs.tgz');
+		$this->_extractZip($tmp . 'phpcs.zip');
 
+		$folder = $tmp . 'PHP_CodeSniffer-phpcs-fixer' . DS;
+		if (WINDOWS) {
+			$windowsNewlines = strpos(file_get_contents(__FILE__), "\r\n") !== false;
+			if ($windowsNewlines) {
+				$this->_correctNewlines($folder);
+			}
+		}
+
+		//Secure MyCakePHP and MyCakePHPCore rules
+		$subfolder = 'CodeSniffer' . DS . 'Standards' . DS . 'MyCakePHP' . DS;
+		$Folder = new FolderLib($target . $subfolder);
+		$Folder->copy(array('to' => $folder . $subfolder));
+
+		$subfolder = 'CodeSniffer' . DS . 'Standards' . DS . 'MyCakePHPCore' . DS;
+		$Folder = new FolderLib($target . $subfolder);
+		$Folder->copy(array('to' => $folder . $subfolder));
+
+		// Clear the target folder
 		$Folder = new FolderLib($target);
-		//$Folder->clear();
+		$Folder->clear();
+
+		// Move everything over now
+		$Folder = new FolderLib($folder);
+		return $Folder->copy(array('to' => $target));
 	}
 
 	/**
@@ -379,13 +418,13 @@ class CodeSnifferShell extends AppShell {
 		$tmp = TMP . 'cs' . DS;
 		$this->_extractZip($tmp . 'cakephp.zip');
 
-		$folder = $tmp . 'cakephp-codesniffer-master' . DS;
+		$folder = $tmp . 'cakephp-codesniffer-phpcs-fixer' . DS;
 		if (WINDOWS) {
 			$windowsNewlines = strpos(file_get_contents(__FILE__), "\r\n") !== false;
 			if ($windowsNewlines) {
 				$this->_correctNewlines($folder);
 			}
-    }
+		}
 
 		$Folder = new FolderLib($target);
 		$Folder->clear();
@@ -394,16 +433,22 @@ class CodeSnifferShell extends AppShell {
 		return $Folder->copy(array('to' => $target));
 	}
 
+	/**
+	 * CodeSnifferShell::_correctNewlines()
+	 *
+	 * @param string $folder
+	 * @return void
+	 */
 	protected function _correctNewlines($folder) {
 		$Iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($folder),
 			RecursiveIteratorIterator::CHILD_FIRST);
-    foreach ($Iterator as $path) {
-	    if ($path->isDir()) {
+		foreach ($Iterator as $path) {
+			if ($path->isDir()) {
 				continue;
-	    }
-    	$path = $path->__toString();
+		}
+		$path = $path->__toString();
 			file_put_contents($path, str_replace("\n", "\r\n", file_get_contents($path)));
-    }
+		}
 	}
 
 	/**
@@ -437,9 +482,36 @@ class CodeSnifferShell extends AppShell {
 	 * CodeSnifferShell::_downloadCodeSniffer()
 	 *
 	 * @param string $url
+	 * @return boolean Success
+	 */
+	public function _downloadCodeSniffer($url) {
+		$tmp = TMP . 'cs' . DS;
+		if (!is_dir($tmp)) {
+			mkdir($tmp, 0770, true);
+		}
+		if (file_exists($tmp . 'phpcs.zip') && filemtime($tmp . 'phpcs.zip') > time() - HOUR) {
+			$this->out('Found phpcs tmp files, skipping re-download.');
+			return true;
+		}
+		$Http = new HttpSocket(array('timeout' => MINUTE, 'ssl_verify_peer' => false, 'ssl_verify_host' => false));
+		$content = $Http->get($url);
+		if ($content->code != 200) {
+			$this->error('Could not download the phpcs repo from ' . $url);
+		}
+		if (!file_put_contents($tmp . 'phpcs.zip', $content)) {
+			$this->error('Could not store the rules at ' . $tmp);
+		}
+
+		return true;
+	}
+
+	/**
+	 * CodeSnifferShell::_downloadCodeSniffer()
+	 *
+	 * @param string $url
 	 * @return string Version
 	 */
-	protected function _downloadCodeSniffer($url) {
+	protected function _downloadCodeSnifferPear($url) {
 		$tmp = TMP . 'cs' . DS;
 		if (!is_dir($tmp)) {
 			mkdir($tmp, 0770, true);

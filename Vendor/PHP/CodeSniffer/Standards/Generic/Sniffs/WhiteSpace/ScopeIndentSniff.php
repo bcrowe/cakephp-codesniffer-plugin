@@ -180,9 +180,9 @@ class Generic_Sniffs_WhiteSpace_ScopeIndentSniff implements PHP_CodeSniffer_Snif
                           ($expectedIndent - 1),
                           ($tokens[$firstToken]['column'] - 1),
                          );
-                $phpcsFile->addFixableError($error, $stackPtr, 'Incorrect', $data);
 
-                if ($phpcsFile->fixer->enabled === true) {
+                $fix = $phpcsFile->addFixableError($error, $stackPtr, 'Incorrect', $data);
+                if ($fix === true && $phpcsFile->fixer->enabled === true) {
                     $diff = ($expectedIndent - $tokens[$firstToken]['column']);
                     if ($diff > 0) {
                         $phpcsFile->fixer->addContentBefore($firstToken, str_repeat(' ', $diff));
@@ -248,7 +248,7 @@ class Generic_Sniffs_WhiteSpace_ScopeIndentSniff implements PHP_CodeSniffer_Snif
                     if ($nextToken !== false) {
                         $i = $nextToken;
                     }
-                }
+                }//end if
 
                 $newline = false;
                 continue;
@@ -369,12 +369,13 @@ class Generic_Sniffs_WhiteSpace_ScopeIndentSniff implements PHP_CodeSniffer_Snif
                     }
 
                     $error .= '%s spaces, found %s';
-                    $data = array(
-                             ($indent - 1),
-                             ($column - 1),
-                            );
-                    $phpcsFile->addFixableError($error, $firstToken, $type, $data);
-                    if ($phpcsFile->fixer->enabled === true) {
+                    $data   = array(
+                               ($indent - 1),
+                               ($column - 1),
+                              );
+
+                    $fix = $phpcsFile->addFixableError($error, $firstToken, $type, $data);
+                    if ($fix === true && $phpcsFile->fixer->enabled === true) {
                         $phpcsFile->fixer->addContentBefore($firstToken, str_repeat(' ', ($indent - $column)));
                     }
                 }//end if
@@ -449,7 +450,7 @@ class Generic_Sniffs_WhiteSpace_ScopeIndentSniff implements PHP_CodeSniffer_Snif
                 }
 
                 $indent = ($tokens[$lastContent]['column'] - 1);
-            }
+            }//end if
 
             $indent += $this->indent;
         }//end foreach

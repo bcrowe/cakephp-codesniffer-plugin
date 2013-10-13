@@ -222,7 +222,6 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
 				}
 
 				if ($this->_isValidVar($varName) === false) {
-					$varName = $originalVarName;
 					$error = 'Variable "%s" is not in valid camel caps format';
 					$data = array($originalVarName);
 					$phpcsFile->addFixableError($error, $stackPtr, 'StringVarNotCamelCaps', $data);

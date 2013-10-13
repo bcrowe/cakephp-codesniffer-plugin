@@ -272,19 +272,31 @@ class PHP_CodeSniffer_File
      */
     protected $ruleset = array();
 
+    /**
+     * An array of sniff codes to restrict violations to.
+     *
+     * This value gets set by PHP_CodeSniffer when the object is created.
+     * It may be empty, indicating that no fitering should take place.
+     *
+     * @var array
+     */
+    protected $restrictions = array();
+
 
     /**
      * Constructs a PHP_CodeSniffer_File.
      *
-     * @param string          $file       The absolute path to the file to process.
-     * @param array(string)   $listeners  The initial listeners listening
-     *                                    to processing of this file.
-     * @param array           $tokenizers An array of extensions mapping
-     *                                    to the tokenizer to use.
-     * @param array           $ruleset    An array of rules from the
-     *                                    ruleset.xml file.
-     * @param PHP_CodeSniffer $phpcs      The PHP_CodeSniffer object controlling
-     *                                    this run.
+     * @param string          $file         The absolute path to the file to process.
+     * @param array(string)   $listeners    The initial listeners listening
+     *                                      to processing of this file.
+     * @param array           $tokenizers   An array of extensions mapping
+     *                                      to the tokenizer to use.
+     * @param array           $ruleset      An array of rules from the
+     *                                      ruleset.xml file.
+     * @param array           $restrictions An array of sniff codes to
+     *                                      restrict violations to.
+     * @param PHP_CodeSniffer $phpcs        The PHP_CodeSniffer object controlling
+     *                                      this run.
      *
      * @throws PHP_CodeSniffer_Exception If the register() method does
      *                                   not return an array.
@@ -294,12 +306,14 @@ class PHP_CodeSniffer_File
         array $listeners,
         array $tokenizers,
         array $ruleset,
+        array $restrictions,
         PHP_CodeSniffer $phpcs
     ) {
         $this->_file      = trim($file);
         $this->_listeners = $listeners;
         $this->tokenizers = $tokenizers;
         $this->ruleset    = $ruleset;
+        $this->restrictions = $restrictions;
         $this->phpcs      = $phpcs;
         $this->fixer      = new PHP_CodeSniffer_Fixer();
 
@@ -443,7 +457,7 @@ class PHP_CodeSniffer_File
         // token, get them to process it.
         foreach ($this->_tokens as $stackPtr => $token) {
             // Check for ignored lines.
-            if ($token['code'] === T_COMMENT) {
+            if ($token['code'] === T_COMMENT || $token['code'] === T_DOC_COMMENT) {
                 if (strpos($token['content'], '@codingStandardsIgnoreStart') !== false) {
                     $ignoring = true;
                 } else if (strpos($token['content'], '@codingStandardsIgnoreEnd') !== false) {
@@ -465,8 +479,8 @@ class PHP_CodeSniffer_File
                     $sniffParts    = explode('.', $parts[0]);
                     $listenerClass = $sniffParts[0].'_Sniffs_'.$sniffParts[1].'_'.$sniffParts[2].'Sniff';
                     $this->phpcs->setSniffProperty($listenerClass, $parts[1], $parts[2]);
-                }
-            }
+                }//end if
+            }//end if
 
             if ($ignoring === true) {
                 $this->_ignoredLines[$token['line']] = true;
@@ -629,6 +643,11 @@ class PHP_CodeSniffer_File
      */
     private function _parse($contents=null)
     {
+        if ($contents === null && empty($this->_tokens) === false) {
+            // File has already been parsed.
+            return;
+        }
+
         try {
             $this->eolChar = self::detectLineEndings($this->_file, $contents);
         } catch (PHP_CodeSniffer_Exception $e) {
@@ -753,7 +772,7 @@ class PHP_CodeSniffer_File
      *                          will be converted into the default severity level.
      * @param boolean $fixable  Can the error be fixed by the sniff?
      *
-     * @return void
+     * @return boolean
      */
     public function addError(
         $error,
@@ -766,13 +785,14 @@ class PHP_CodeSniffer_File
         // Don't bother doing any processing if errors are just going to
         // be hidden in the reports anyway.
         if ($this->phpcs->cli->errorSeverity === 0) {
-            return;
+            return false;
         }
 
         // Work out which sniff generated the error.
         if (substr($code, 0, 9) === 'Internal.') {
             // Any internal message.
-            $sniff = $code;
+            $sniff     = $code;
+            $sniffCode = $code;
         } else {
             $parts = explode('_', str_replace('\\', '_', $this->_activeListener));
             if (isset($parts[3]) === true) {
@@ -784,33 +804,42 @@ class PHP_CodeSniffer_File
                 $sniff = 'unknownSniff';
             }
 
+            $sniffCode = $sniff;
             if ($code !== '') {
-                $sniff .= '.'.$code;
+                $sniffCode .= '.'.$code;
             }
+        }//end if
+
+        // Make sure this message type is allowed based on the --sniffs
+        // command line argument values.
+        if (empty($this->restrictions) === false
+            && in_array($sniffCode, $this->restrictions) === false
+            && in_array($sniff, $this->restrictions) === false
+        ) {
+            return false;
         }
 
         // Make sure this message type has not been set to "warning".
-        if (isset($this->ruleset[$sniff]['type']) === true
-            && $this->ruleset[$sniff]['type'] === 'warning'
+        if (isset($this->ruleset[$sniffCode]['type']) === true
+            && $this->ruleset[$sniffCode]['type'] === 'warning'
         ) {
             // Pass this off to the warning handler.
-            $this->addWarning($error, $stackPtr, $code, $data, $severity);
-            return;
+            return $this->addWarning($error, $stackPtr, $code, $data, $severity);
         }
 
         // Make sure we are interested in this severity level.
-        if (isset($this->ruleset[$sniff]['severity']) === true) {
-            $severity = $this->ruleset[$sniff]['severity'];
+        if (isset($this->ruleset[$sniffCode]['severity']) === true) {
+            $severity = $this->ruleset[$sniffCode]['severity'];
         } else if ($severity === 0) {
             $severity = PHPCS_DEFAULT_ERROR_SEV;
         }
 
         if ($this->phpcs->cli->errorSeverity > $severity) {
-            return;
+            return false;
         }
 
         // Make sure we are not ignoring this file.
-        $patterns = $this->phpcs->getIgnorePatterns($sniff);
+        $patterns = $this->phpcs->getIgnorePatterns($sniffCode);
         foreach ($patterns as $pattern => $type) {
             // While there is support for a type of each pattern
             // (absolute or relative) we don't actually support it here.
@@ -821,7 +850,7 @@ class PHP_CodeSniffer_File
 
             $pattern = strtr($pattern, $replacements);
             if (preg_match("|{$pattern}|i", $this->_file) === 1) {
-                return;
+                return false;
             }
         }
 
@@ -842,13 +871,14 @@ class PHP_CodeSniffer_File
             if (isset($this->_errors[$lineNum]) === false) {
                 $this->_errors[$lineNum] = 0;
             }
+
             $this->_errors[$lineNum]++;
-            return;
+            return true;
         }
 
         // Work out the warning message.
-        if (isset($this->ruleset[$sniff]['message']) === true) {
-            $error = $this->ruleset[$sniff]['message'];
+        if (isset($this->ruleset[$sniffCode]['message']) === true) {
+            $error = $this->ruleset[$sniffCode]['message'];
         }
 
         if (empty($data) === true) {
@@ -867,10 +897,12 @@ class PHP_CodeSniffer_File
 
         $this->_errors[$lineNum][$column][] = array(
                                                'message'  => $message,
-                                               'source'   => $sniff,
+                                               'source'   => $sniffCode,
                                                'severity' => $severity,
                                                'fixable'  => $fixable,
                                               );
+
+        return true;
 
     }//end addError()
 
@@ -886,7 +918,7 @@ class PHP_CodeSniffer_File
      *                          will be converted into the default severity level.
      * @param boolean $fixable  Can the warning be fixed by the sniff?
      *
-     * @return void
+     * @return boolean
      */
     public function addWarning(
         $warning,
@@ -899,13 +931,14 @@ class PHP_CodeSniffer_File
         // Don't bother doing any processing if warnings are just going to
         // be hidden in the reports anyway.
         if ($this->phpcs->cli->warningSeverity === 0) {
-            return;
+            return false;
         }
 
         // Work out which sniff generated the warning.
         if (substr($code, 0, 9) === 'Internal.') {
             // Any internal message.
-            $sniff = $code;
+            $sniff     = $code;
+            $sniffCode = $code;
         } else {
             $parts = explode('_', str_replace('\\', '_', $this->_activeListener));
             if (isset($parts[3]) === true) {
@@ -917,33 +950,42 @@ class PHP_CodeSniffer_File
                 $sniff = 'unknownSniff';
             }
 
+            $sniffCode = $sniff;
             if ($code !== '') {
-                $sniff .= '.'.$code;
+                $sniffCode .= '.'.$code;
             }
+        }//end if
+
+        // Make sure this message type is allowed based on the --sniffs
+        // command line argument values.
+        if (empty($this->restrictions) === false
+            && in_array($sniffCode, $this->restrictions) === false
+            && in_array($sniff, $this->restrictions) === false
+        ) {
+            return false;
         }
 
         // Make sure this message type has not been set to "error".
-        if (isset($this->ruleset[$sniff]['type']) === true
-            && $this->ruleset[$sniff]['type'] === 'error'
+        if (isset($this->ruleset[$sniffCode]['type']) === true
+            && $this->ruleset[$sniffCode]['type'] === 'error'
         ) {
             // Pass this off to the error handler.
-            $this->addError($warning, $stackPtr, $code, $data, $severity);
-            return;
+            return $this->addError($warning, $stackPtr, $code, $data, $severity);
         }
 
         // Make sure we are interested in this severity level.
-        if (isset($this->ruleset[$sniff]['severity']) === true) {
-            $severity = $this->ruleset[$sniff]['severity'];
+        if (isset($this->ruleset[$sniffCode]['severity']) === true) {
+            $severity = $this->ruleset[$sniffCode]['severity'];
         } else if ($severity === 0) {
             $severity = PHPCS_DEFAULT_WARN_SEV;
         }
 
         if ($this->phpcs->cli->warningSeverity > $severity) {
-            return;
+            return false;
         }
 
         // Make sure we are not ignoring this file.
-        $patterns = $this->phpcs->getIgnorePatterns($sniff);
+        $patterns = $this->phpcs->getIgnorePatterns($sniffCode);
         foreach ($patterns as $pattern => $type) {
             // While there is support for a type of each pattern
             // (absolute or relative) we don't actually support it here.
@@ -954,7 +996,7 @@ class PHP_CodeSniffer_File
 
             $pattern = strtr($pattern, $replacements);
             if (preg_match("|{$pattern}|i", $this->_file) === 1) {
-                return;
+                return false;
             }
         }
 
@@ -975,13 +1017,14 @@ class PHP_CodeSniffer_File
             if (isset($this->_warnings[$lineNum]) === false) {
                 $this->_warnings[$lineNum] = 0;
             }
+
             $this->_warnings[$lineNum]++;
-            return;
+            return true;
         }
 
         // Work out the warning message.
-        if (isset($this->ruleset[$sniff]['message']) === true) {
-            $warning = $this->ruleset[$sniff]['message'];
+        if (isset($this->ruleset[$sniffCode]['message']) === true) {
+            $warning = $this->ruleset[$sniffCode]['message'];
         }
 
         if (empty($data) === true) {
@@ -1000,10 +1043,12 @@ class PHP_CodeSniffer_File
 
         $this->_warnings[$lineNum][$column][] = array(
                                                  'message'  => $message,
-                                                 'source'   => $sniff,
+                                                 'source'   => $sniffCode,
                                                  'severity' => $severity,
                                                  'fixable'  => $fixable,
                                                 );
+
+        return true;
 
     }//end addWarning()
 
@@ -1018,7 +1063,7 @@ class PHP_CodeSniffer_File
      * @param int    $severity The severity level for this error. A value of 0
      *                         will be converted into the default severity level.
      *
-     * @return void
+     * @return boolean
      */
     public function addFixableError(
         $error,
@@ -1027,7 +1072,7 @@ class PHP_CodeSniffer_File
         $data=array(),
         $severity=0
     ) {
-        $this->addError($error, $stackPtr, $code, $data, $severity, true);
+        return $this->addError($error, $stackPtr, $code, $data, $severity, true);
 
     }//end addFixableError()
 
@@ -1042,7 +1087,7 @@ class PHP_CodeSniffer_File
      * @param int    $severity The severity level for this warning. A value of 0
      *                         will be converted into the default severity level.
      *
-     * @return void
+     * @return boolean
      */
     public function addFixableWarning(
         $warning,
@@ -1051,7 +1096,7 @@ class PHP_CodeSniffer_File
         $data=array(),
         $severity=0
     ) {
-        $this->addWarning($warning, $stackPtr, $code, $data, $severity, true);
+        return $this->addWarning($warning, $stackPtr, $code, $data, $severity, true);
 
     }//end addFixableWarning()
 
@@ -1611,9 +1656,9 @@ class PHP_CodeSniffer_File
             }
 
             // Very special case for IF statements in PHP that can be defined without
-            // scope tokens. If an IF statement below this one has an opener but no
+            // scope tokens. E.g., if (1) 1; 1 ? (1 ? 1 : 1) : 1;
+            // If an IF statement below this one has an opener but no
             // keyword, the opener will be incorrectly assigned to this IF statement.
-            // E.g., if (1) 1; 1 ? (1 ? 1 : 1) : 1;
             if (($currType === T_IF || $currType === T_ELSE) && $opener === null && $tokens[$i]['code'] === T_SEMICOLON) {
                 if (PHP_CODESNIFFER_VERBOSITY > 1) {
                     $type = $tokens[$stackPtr]['type'];
@@ -2634,8 +2679,8 @@ class PHP_CodeSniffer_File
                 if ($prev !== false && $this->_tokens[$prev]['code'] === T_USE) {
                     return true;
                 }
-            }
-        }
+            }//end if
+        }//end if
 
         $tokenAfter = $this->findNext(
             PHP_CodeSniffer_Tokens::$emptyTokens,

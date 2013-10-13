@@ -67,6 +67,11 @@ class Squiz_Sniffs_CSS_ColonSpacingSniff implements PHP_CodeSniffer_Sniff
             return;
         }
 
+        if ($tokens[$prev]['content'] === 'progid') {
+            // Special case for IE filters.
+            return;
+        }
+
         if ($tokens[($stackPtr - 1)]['code'] === T_WHITESPACE) {
             $error = 'There must be no space before a colon in a style definition';
             $phpcsFile->addError($error, $stackPtr, 'Before');
@@ -74,8 +79,8 @@ class Squiz_Sniffs_CSS_ColonSpacingSniff implements PHP_CodeSniffer_Sniff
 
         if ($tokens[($stackPtr + 1)]['code'] !== T_WHITESPACE) {
             $error = 'Expected 1 space after colon in style definition; 0 found';
-            $phpcsFile->addFixableError($error, $stackPtr, 'NoneAfter');
-            if ($phpcsFile->fixer->enabled === true) {
+            $fix   = $phpcsFile->addFixableError($error, $stackPtr, 'NoneAfter');
+            if ($fix === true && $phpcsFile->fixer->enabled === true) {
                 $phpcsFile->fixer->addContent($stackPtr, ' ');
             }
         } else {

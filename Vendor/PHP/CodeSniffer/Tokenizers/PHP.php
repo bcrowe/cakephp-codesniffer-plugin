@@ -334,7 +334,7 @@ class PHP_CodeSniffer_Tokenizers_PHP
                         // We found the other end of the double quoted string.
                         break;
                     }
-                }
+                }//end for
 
                 $stackPtr = $i;
 
@@ -433,7 +433,7 @@ class PHP_CodeSniffer_Tokenizers_PHP
 
                     $finalTokens[$newStackPtr] = $newToken;
                     $newStackPtr++;
-                }
+                }//end for
 
                 // Add the end heredoc token to the final array.
                 $finalTokens[$newStackPtr]
@@ -462,9 +462,16 @@ class PHP_CodeSniffer_Tokenizers_PHP
             if ($tokenIsArray === true
                 && $token[0] === T_STRING
                 && $tokens[($stackPtr + 1)] === ':'
+                && $tokens[($stackPtr - 1)][0] !== T_PAAMAYIM_NEKUDOTAYIM
             ) {
+                $stopTokens = array(
+                               T_CASE,
+                               T_SEMICOLON,
+                               T_OPEN_CURLY_BRACKET,
+                              );
+
                 for ($x = ($newStackPtr - 2); $x > 0; $x--) {
-                    if (in_array($finalTokens[$x]['code'], PHP_CodeSniffer_Tokens::$emptyTokens) === false) {
+                    if (in_array($finalTokens[$x]['code'], $stopTokens) === true) {
                         break;
                     }
                 }
@@ -568,7 +575,7 @@ class PHP_CodeSniffer_Tokenizers_PHP
      * braces for scope openers and closers. It also turns some T_FUNCTION tokens
      * into T_CLOSURE when they are not standard function definitions. It also
      * detects short array syntax and converts those square brackets into new tokens.
-     * It also corrects some usage of the static keyword.
+     * It also corrects some usage of the static and class keywords.
      *
      * @param array  &$tokens The array of tokens to process.
      * @param string $eolChar The EOL character to use for splitting strings.
@@ -663,6 +670,16 @@ class PHP_CodeSniffer_Tokenizers_PHP
                 }
 
                 continue;
+            } else if ($tokens[$i]['code'] === T_CLASS
+                && $tokens[($i - 1)]['code'] === T_DOUBLE_COLON
+            ) {
+                $tokens[$i]['code'] = T_STRING;
+                $tokens[$i]['type'] = 'T_STRING';
+
+                if (PHP_CODESNIFFER_VERBOSITY > 1) {
+                    $line = $tokens[$i]['line'];
+                    echo "\t* token $i on line $line changed from T_CLASS to T_STRING".PHP_EOL;
+                }
             }//end if
 
             if (($tokens[$i]['code'] !== T_CASE
@@ -763,9 +780,9 @@ class PHP_CodeSniffer_Tokenizers_PHP
                         }
 
                         break;
-                    }
-                }
-            }
+                    }//end if
+                }//end foreach
+            }//end for
         }//end for
 
         if (PHP_CODESNIFFER_VERBOSITY > 1) {

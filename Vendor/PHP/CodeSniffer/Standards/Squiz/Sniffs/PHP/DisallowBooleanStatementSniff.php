@@ -1,6 +1,6 @@
 <?php
 /**
- * PSR2_Sniffs_ControlStructures_ElseIfDeclarationSniff.
+ * Squiz_Sniffs_PHP_DisallowBooleanStatementSniff.
  *
  * PHP version 5
  *
@@ -13,9 +13,9 @@
  */
 
 /**
- * PSR2_Sniffs_ControlStructures_ElseIfDeclarationSniff.
+ * Squiz_Sniffs_PHP_DisallowBooleanStatementSniff.
  *
- * Verifies that there are no else if statements. Elseif should be used instead.
+ * Ensures that boolean operators are only used inside control structure conditions.
  *
  * @category  PHP
  * @package   PHP_CodeSniffer
@@ -25,7 +25,7 @@
  * @version   Release: @package_version@
  * @link      http://pear.php.net/package/PHP_CodeSniffer
  */
-class PSR2_Sniffs_ControlStructures_ElseIfDeclarationSniff implements PHP_CodeSniffer_Sniff
+class Squiz_Sniffs_PHP_DisallowBooleanStatementSniff implements PHP_CodeSniffer_Sniff
 {
 
 
@@ -36,7 +36,7 @@ class PSR2_Sniffs_ControlStructures_ElseIfDeclarationSniff implements PHP_CodeSn
      */
     public function register()
     {
-        return array(T_ELSE);
+        return PHP_CodeSniffer_Tokens::$booleanOperators;
 
     }//end register()
 
@@ -45,34 +45,30 @@ class PSR2_Sniffs_ControlStructures_ElseIfDeclarationSniff implements PHP_CodeSn
      * Processes this test, when one of its tokens is encountered.
      *
      * @param PHP_CodeSniffer_File $phpcsFile The file being scanned.
-     * @param int                  $stackPtr  The position of the current token in the
-     *                                        stack passed in $tokens.
+     * @param int                  $stackPtr  The position of the current token
+     *                                        in the stack passed in $tokens.
      *
      * @return void
      */
     public function process(PHP_CodeSniffer_File $phpcsFile, $stackPtr)
     {
         $tokens = $phpcsFile->getTokens();
-        $next   = $phpcsFile->findNext(T_WHITESPACE, ($stackPtr + 1), null, true);
-        if ($tokens[$next]['code'] === T_IF) {
-            $error = 'Usage of ELSE IF is discouraged; use ELSEIF instead';
-            $fix   = $phpcsFile->addFixableWarning($error, $stackPtr, 'NotAllowed');
-
-            if ($fix === true && $phpcsFile->fixer->enabled === true) {
-                $phpcsFile->fixer->beginChangeset();
-                $phpcsFile->fixer->replaceToken($stackPtr, 'elseif');
-                for ($i = ($stackPtr + 1); $i <= $next; $i++) {
-                    $phpcsFile->fixer->replaceToken($i, '');
+        if (isset($tokens[$stackPtr]['nested_parenthesis']) === true) {
+            $foundOwner = false;
+            foreach ($tokens[$stackPtr]['nested_parenthesis'] as $open => $close) {
+                if (isset($tokens[$open]['parenthesis_owner']) === true) {
+                    // Any owner means we are not just a simple statement.
+                    return;
                 }
-
-                $phpcsFile->fixer->endChangeset();
             }
         }
+
+        $error = 'Boolean operators are not allowed outside of control structure conditions';
+        $phpcsFile->addError($error, $stackPtr, 'Found');
 
     }//end process()
 
 
 }//end class
-
 
 ?>

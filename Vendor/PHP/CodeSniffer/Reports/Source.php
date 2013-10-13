@@ -70,9 +70,12 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
                 foreach ($colErrors as $error) {
                     $source = $error['source'];
                     if (isset($this->_sourceCache[$source]) === false) {
-                        $this->_sourceCache[$source] = 1;
+                        $this->_sourceCache[$source] = array(
+                                                        'count'   => 1,
+                                                        'fixable' => $error['fixable'],
+                                                       );
                     } else {
-                        $this->_sourceCache[$source]++;
+                        $this->_sourceCache[$source]['count']++;
                     }
                 }
             }
@@ -121,16 +124,47 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
         echo PHP_EOL.'PHP CODE SNIFFER VIOLATION SOURCE SUMMARY'.PHP_EOL;
         echo str_repeat('-', $width).PHP_EOL;
         if ($showSources === true) {
-            echo 'SOURCE'.str_repeat(' ', ($width - 11)).'COUNT'.PHP_EOL;
-            echo str_repeat('-', $width).PHP_EOL;
+            if ($totalFixable > 0) {
+                echo '    SOURCE'.str_repeat(' ', ($width - 15)).'COUNT'.PHP_EOL;
+            } else {
+                echo 'SOURCE'.str_repeat(' ', ($width - 11)).'COUNT'.PHP_EOL;
+            }
         } else {
-            echo 'STANDARD  CATEGORY            SNIFF'.str_repeat(' ', ($width - 40)).'COUNT'.PHP_EOL;
-            echo str_repeat('-', $width).PHP_EOL;
+            if ($totalFixable > 0) {
+                echo '    STANDARD  CATEGORY            SNIFF'.str_repeat(' ', ($width - 44)).'COUNT'.PHP_EOL;
+            } else {
+                echo 'STANDARD  CATEGORY            SNIFF'.str_repeat(' ', ($width - 40)).'COUNT'.PHP_EOL;
+            }
         }
 
-        foreach ($this->_sourceCache as $source => $count) {
+        echo str_repeat('-', $width).PHP_EOL;
+
+        $fixableSources = 0;
+        $maxSniffWidth  = 37;
+        if ($totalFixable > 0) {
+            $maxSniffWidth += 4;
+        }
+
+        foreach ($this->_sourceCache as $source => $sourceData) {
+            if ($totalFixable > 0) {
+                echo '[';
+                if ($sourceData['fixable'] === true) {
+                    echo 'x';
+                    $fixableSources++;
+                } else {
+                    echo ' ';
+                }
+
+                echo '] ';
+            }
+
             if ($showSources === true) {
-                echo $source.str_repeat(' ', ($width - 5 - strlen($source)));
+                echo $source;
+                if ($totalFixable > 0) {
+                    echo str_repeat(' ', ($width - 9 - strlen($source)));
+                } else {
+                    echo str_repeat(' ', ($width - 5 - strlen($source)));
+                }
             } else {
                 $parts = explode('.', $source);
                 if ($parts[0] === 'Internal') {
@@ -158,14 +192,18 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
                     $sniff  .= ' '.$name;
                 }
 
-                if (strlen($sniff) > ($width - 37)) {
-                    $sniff = substr($sniff, 0, ($width - 37 - strlen($sniff)));
+                if (strlen($sniff) > ($width - $maxSniffWidth)) {
+                    $sniff = substr($sniff, 0, ($width - $maxSniffWidth - strlen($sniff)));
                 }
 
-                echo $sniff.str_repeat(' ', ($width - 35 - strlen($sniff)));
+                if ($totalFixable > 0) {
+                    echo $sniff.str_repeat(' ', ($width - 39 - strlen($sniff)));
+                } else {
+                    echo $sniff.str_repeat(' ', ($width - 35 - strlen($sniff)));
+                }
             }//end if
 
-            echo $count.PHP_EOL;
+            echo $sourceData['count'].PHP_EOL;
         }//end foreach
 
         echo str_repeat('-', $width).PHP_EOL;
@@ -181,7 +219,7 @@ class PHP_CodeSniffer_Reports_Source implements PHP_CodeSniffer_Report
 
         if ($totalFixable > 0) {
             echo PHP_EOL.str_repeat('-', $width).PHP_EOL;
-            echo 'PHPCBF CAN FIX '.$totalFixable.' OF THESE SNIFF VIOLATIONS AUTOMATICALLY';
+            echo "PHPCBF CAN FIX THE $fixableSources MARKED SOURCES AUTOMATICALLY ($totalFixable VIOLATIONS IN TOTAL)";
         }
 
         echo PHP_EOL.str_repeat('-', $width).PHP_EOL.PHP_EOL;

@@ -69,6 +69,20 @@ class PHP_CodeSniffer
 {
 
     /**
+     * The current version.
+     *
+     * @var string
+     */
+    const VERSION = '1.6.0a1';
+
+    /**
+     * Package stability; either stable, beta or alpha.
+     *
+     * @var string
+     */
+    const STABILITY = 'alpha';
+
+    /**
      * The file or directory that is currently being processed.
      *
      * @var string
@@ -226,6 +240,10 @@ class PHP_CodeSniffer
             define('PHPCS_DEFAULT_WARN_SEV', 5);
         }
 
+        if (defined('PHP_CODESNIFFER_CBF') === false) {
+            define('PHP_CODESNIFFER_CBF', false);
+        }
+
         // Set default CLI object in case someone is running us
         // without using the command line script.
         $this->cli = new PHP_CodeSniffer_CLI();
@@ -371,8 +389,8 @@ class PHP_CodeSniffer
      *                                   be traversed for source files.
      * @param string|array $standards    The set of code sniffs we are testing
      *                                   against.
-     * @param array        $restrictions The sniff names to restrict the allowed
-     *                                   listeners to.
+     * @param array        $restrictions The sniff codes to restrict the
+     *                                   violations to.
      * @param boolean      $local        If true, don't recurse into directories.
      *
      * @return void
@@ -425,7 +443,13 @@ class PHP_CodeSniffer
             $sniffs = array_merge($sniffs, $this->processRuleset($standard));
         }//end foreach
 
-        $this->registerSniffs($sniffs, $restrictions);
+        $sniffRestrictions = array();
+        foreach ($restrictions as $sniffCode) {
+            $parts = explode('.', strtolower($sniffCode));
+            $sniffRestrictions[] = $parts[0].'_sniffs_'.$parts[1].'_'.$parts[2].'sniff';
+        }
+
+        $this->registerSniffs($sniffs, $sniffRestrictions);
         $this->populateTokenListeners();
 
         if (PHP_CODESNIFFER_VERBOSITY === 1) {
@@ -469,7 +493,7 @@ class PHP_CodeSniffer
                 $lastDir = $currDir;
             }
 
-            $phpcsFile = $this->processFile($file);
+            $phpcsFile = $this->processFile($file, null, $restrictions);
             $numProcessed++;
 
             if (PHP_CODESNIFFER_VERBOSITY > 0
@@ -498,7 +522,8 @@ class PHP_CodeSniffer
             if ($dots === 60) {
                 $padding = ($maxLength - strlen($numProcessed));
                 echo str_repeat(' ', $padding);
-                echo " $numProcessed / $numFiles".PHP_EOL;
+                $percent = round($numProcessed / $numFiles * 100);
+                echo " $numProcessed / $numFiles ($percent%)".PHP_EOL;
                 $dots = 0;
             }
         }//end foreach
@@ -770,7 +795,7 @@ class PHP_CodeSniffer
                     echo str_repeat("\t", $depth);
                     echo "\t\t=> $ref".PHP_EOL;
                 }
-            }
+            }//end if
         }//end if
 
         if (is_dir($ref) === true) {
@@ -1245,15 +1270,17 @@ class PHP_CodeSniffer
      * conforms with the standard. Returns the processed file object, or NULL
      * if no file was processed due to error.
      *
-     * @param string $file     The file to process.
-     * @param string $contents The contents to parse. If NULL, the content
-     *                         is taken from the file system.
+     * @param string $file         The file to process.
+     * @param string $contents     The contents to parse. If NULL, the content
+     *                             is taken from the file system.
+     * @param array  $restrictions The sniff codes to restrict the
+     *                             violations to.
      *
      * @return PHP_CodeSniffer_File
      * @throws PHP_CodeSniffer_Exception If the file could not be processed.
      * @see    _processFile()
      */
-    public function processFile($file, $contents=null)
+    public function processFile($file, $contents=null, $restrictions=array())
     {
         if ($contents === null && file_exists($file) === false) {
             throw new PHP_CodeSniffer_Exception("Source file $file does not exist");
@@ -1274,20 +1301,20 @@ class PHP_CodeSniffer
                 $firstContent  = fgets($handle);
                 $firstContent .= fgets($handle);
                 fclose($handle);
-            }
-        }
 
-        if (strpos($firstContent, '@codingStandardsIgnoreFile') !== false) {
-            // We are ignoring the whole file.
-            if (PHP_CODESNIFFER_VERBOSITY > 0) {
-                echo 'Ignoring '.basename($filePath).PHP_EOL;
-            }
+                if (strpos($firstContent, '@codingStandardsIgnoreFile') !== false) {
+                    // We are ignoring the whole file.
+                    if (PHP_CODESNIFFER_VERBOSITY > 0) {
+                        echo 'Ignoring '.basename($filePath).PHP_EOL;
+                    }
 
-            return null;
-        }
+                    return null;
+                }
+            }
+        }//end if
 
         try {
-            $phpcsFile = $this->_processFile($file, $contents);
+            $phpcsFile = $this->_processFile($file, $contents, $restrictions);
         } catch (Exception $e) {
             $trace = $e->getTrace();
 
@@ -1316,6 +1343,7 @@ class PHP_CodeSniffer
                 $this->_tokenListeners,
                 $this->allowedFileExtensions,
                 $this->ruleset,
+                $restrictions,
                 $this
             );
 
@@ -1364,7 +1392,7 @@ class PHP_CodeSniffer
                 // and only clear it when the file changes, but we are rechecking
                 // the same file.
                 $this->populateTokenListeners();
-                $phpcsFile = $this->_processFile($file, $contents);
+                $phpcsFile = $this->_processFile($file, $contents, $restrictions);
                 break;
             }
         }//end while
@@ -1379,14 +1407,16 @@ class PHP_CodeSniffer
      *
      * Does raw processing only. No interactive support or error checking.
      *
-     * @param string $file     The file to process.
-     * @param string $contents The contents to parse. If NULL, the content
-     *                         is taken from the file system.
+     * @param string $file         The file to process.
+     * @param string $contents     The contents to parse. If NULL, the content
+     *                             is taken from the file system.
+     * @param array  $restrictions The sniff codes to restrict the
+     *                             violations to.
      *
      * @return PHP_CodeSniffer_File
      * @see    processFile()
      */
-    private function _processFile($file, $contents)
+    private function _processFile($file, $contents, $restrictions)
     {
         if (PHP_CODESNIFFER_VERBOSITY > 0) {
             $startTime = time();
@@ -1401,6 +1431,7 @@ class PHP_CodeSniffer
             $this->_tokenListeners,
             $this->allowedFileExtensions,
             $this->ruleset,
+            $restrictions,
             $this
         );
 
