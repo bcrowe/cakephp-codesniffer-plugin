@@ -18,7 +18,7 @@
 /**
  * Disallow short open tags
  *
- * But permit short-open echo tags (<?=) as they are part of PHP 5.4+
+ * But permit short-open echo tags (<?=) [T_OPEN_TAG_WITH_ECHO] as they are part of PHP 5.4+
  *
  */
 class CakePHP_Sniffs_PHP_DisallowShortOpenTagSniff implements PHP_CodeSniffer_Sniff {
@@ -53,8 +53,14 @@ class CakePHP_Sniffs_PHP_DisallowShortOpenTagSniff implements PHP_CodeSniffer_Sn
 
 		if (trim($openTag['content']) === '<?') {
 			$error = 'Short PHP opening tag used; expected "<?php" but found "%s"';
-			$data = array($openTag['content']);
-			$phpcsFile->addError($error, $stackPtr, 'Found', $data);
+			$data = array(trim($openTag['content']));
+			$phpcsFile->addFixableError($error, $stackPtr, 'Found', $data);
+			if ($phpcsFile->fixer->enabled === true) {
+				// Make sure the following whitespace is preserved
+				$content = str_replace('<?', '<?php', $openTag['content']);
+				$phpcsFile->fixer->replaceToken($stackPtr, $content);
+			}
 		}
 	}
+
 }

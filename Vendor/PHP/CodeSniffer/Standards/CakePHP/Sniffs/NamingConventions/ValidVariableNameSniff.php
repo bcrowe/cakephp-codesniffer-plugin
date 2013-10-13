@@ -80,7 +80,9 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
 					if ($this->_isValidVar($objVarName) === false) {
 						$error = 'Object property "%s" is not in valid camel caps format';
 						$data = array($originalVarName);
-						$phpcsFile->addError($error, $var, 'NotCamelCaps', $data);
+						$phpcsFile->addFixableError($error, $var, 'NotCamelCaps', $data);
+						//$phpcsFile->addFixableError($error, $stackPtr, 'NotCamelCaps', $data);
+						$this->_correct($phpcsFile, $var, $originalVarName);
 					}
 				}
 			}
@@ -115,7 +117,7 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
 			$error = 'Variable "%s" is not in valid camel caps format';
 			$data = array($originalVarName);
 			$phpcsFile->addFixableError($error, $stackPtr, 'NotCamelCaps', $data);
-			$this->_correct($phpcsFile, $stackPtr, $originalVarName);
+			$this->_correct($phpcsFile, $stackPtr, $originalVarName, '$');
 		}
 	}
 
@@ -148,13 +150,12 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
 				$data = array($varName);
 				$phpcsFile->addError($error, $stackPtr, 'PrivateNoUnderscore', $data);
 				return;
-			} else {
-				$filename = $phpcsFile->getFilename();
-				if (strpos($filename, '/lib/Cake/') !== false) {
-					$warning = 'Private variable "%s" in CakePHP core is discouraged';
-					$data = array($varName);
-					$phpcsFile->addWarning($warning, $stackPtr, 'PrivateInCore', $data);
-				}
+			}
+			$filename = $phpcsFile->getFilename();
+			if (strpos($filename, '/lib/Cake/') !== false) {
+				$warning = 'Private variable "%s" in CakePHP core is discouraged';
+				$data = array($varName);
+				$phpcsFile->addWarning($warning, $stackPtr, 'PrivateInCore', $data);
 			}
 		} else {
 			if (substr($varName, 0, 1) !== '_') {
@@ -176,7 +177,8 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
 		if ($this->_isValidVar($varName, $public) === false) {
 			$error = 'Member variable "%s" is not in valid camel caps format';
 			$data = array($varName);
-			$phpcsFile->addError($error, $stackPtr, 'MemberVarNotCamelCaps', $data);
+			$phpcsFile->addFixableError($error, $stackPtr, 'MemberVarNotCamelCaps', $data);
+			$this->_correct($phpcsFile, $stackPtr, $varName, '$');
 		}
 	}
 
@@ -220,10 +222,15 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
 				}
 
 				if ($this->_isValidVar($varName) === false) {
-					$varName = $matches[0];
+					$varName = $originalVarName;
 					$error = 'Variable "%s" is not in valid camel caps format';
 					$data = array($originalVarName);
-					$phpcsFile->addError($error, $stackPtr, 'StringVarNotCamelCaps', $data);
+					$phpcsFile->addFixableError($error, $stackPtr, 'StringVarNotCamelCaps', $data);
+					if ($phpcsFile->fixer->enabled === true) {
+						$originalVarName = '$' . $originalVarName;
+						$newVarName = '$' . lcfirst(Inflector::camelize(strtolower($originalVarName)));
+						$tokens[$stackPtr]['content'] = str_replace($originalVarName, $newVarName, $tokens[$stackPtr]['content']);
+					}
 				}
 			}
 		}
@@ -266,19 +273,22 @@ class CakePHP_Sniffs_NamingConventions_ValidVariableNameSniff extends PHP_CodeSn
  * @param string $originalName Variable name without leading $ sign.
  * @return void
  */
-	protected function _correct($phpcsFile, $stackPtr, $originalName) {
+	protected function _correct($phpcsFile, $stackPtr, $originalName, $prepend = null) {
 		if ($phpcsFile->fixer->enabled !== true) {
 			return;
 		}
 		//$variableName = ltrim($originalName, '$');
 		$variableName = ltrim($originalName, '_');
 		$underscores = strlen($originalName) - strlen($variableName);
-		$variableName = lcfirst(Inflector::camelize($variableName));
+		$variableName = lcfirst(Inflector::camelize(strtolower($variableName)));
 
 		if ($underscores) {
 			$variableName = str_repeat('_', $underscores) . $variableName;
 		}
-		$phpcsFile->fixer->replaceToken($stackPtr, '$' . $variableName);
+		if ($prepend) {
+			$variableName = $prepend . $variableName;
+		}
+		$phpcsFile->fixer->replaceToken($stackPtr, $variableName);
 	}
 
 }

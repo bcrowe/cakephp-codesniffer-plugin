@@ -79,7 +79,15 @@ class Squiz_Sniffs_WhiteSpace_MemberVarSpacingSniff extends PHP_CodeSniffer_Stan
         if ($foundLines !== 1) {
             $error = 'Expected 1 blank line before member var; %s found';
             $data  = array($foundLines);
-            $phpcsFile->addError($error, $stackPtr, 'After', $data);
+            // Multiple new lines, let another sniff take care of that.
+            if ($foundLines > 0) {
+                $phpcsFile->addError($error, $stackPtr, 'Before', $data);
+                return;
+            }
+            $phpcsFile->addFixableError($error, $stackPtr, 'Before', $data);
+            if ($phpcsFile->fixer->enabled === true) {
+                $phpcsFile->fixer->addNewlineBefore($i);
+            }
         }
 
     }//end processMemberVar()

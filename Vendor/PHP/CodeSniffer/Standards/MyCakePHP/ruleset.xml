@@ -63,6 +63,7 @@
 	<rule ref="Squiz.PHP.NonExecutableCode"/>
 	<rule ref="Generic.PHP.NoSilencedErrors"/>
 	<rule ref="Generic.PHP.LowerCaseConstant"/>
+	<rule ref="CakePHP.PHP.DisallowShortOpenTag"/>
 
 	<rule ref="CakePHP.Strings.ConcatenationSpacing"/>
 

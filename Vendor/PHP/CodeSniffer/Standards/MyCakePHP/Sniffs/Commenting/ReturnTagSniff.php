@@ -86,7 +86,7 @@ class MyCakePHP_Sniffs_Commenting_ReturnTagSniff extends PHP_CodeSniffer_Standar
 		// A class method should have @return
 		if (!$commentWithReturn) {
 			$error = 'Missing @return tag in function comment';
-			$phpcsFile->addError($error, $commentWithReturn, 'Missing');
+			$phpcsFile->addError($error, $stackPtr, 'Missing');
 			return;
 		}
 
