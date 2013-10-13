@@ -29,6 +29,7 @@ class MyCakePHP_Sniffs_PHP_IsNullSniff implements PHP_CodeSniffer_Sniff {
  * Processes this test, when one of its tokens is encountered.
  *
  * Ensures that strict check "=== null" is used instead of is_null().
+ * Only for `is(null) !== ...` and `... !== is(null)` it will be skipped.
  *
  * @param PHP_CodeSniffer_File $phpcsFile The file being scanned.
  * @param integer              $stackPtr  The position of the current token in the
@@ -48,8 +49,21 @@ class MyCakePHP_Sniffs_PHP_IsNullSniff implements PHP_CodeSniffer_Sniff {
 			return;
 		}
 
+		// Then closing one
 		$closeToken = $phpcsFile->findNext(T_CLOSE_PARENTHESIS, ($openToken + 1));
 		if (!$closeToken) {
+			return;
+		}
+
+		// If comparison operator before or after, we need to skip
+		$comparisonOperators = array(T_IS_NOT_IDENTICAL, T_IS_IDENTICAL);
+		$previousToken = $phpcsFile->findPrevious(T_WHITESPACE, ($stackPtr - 1), null, true);
+		if (in_array($tokens[$previousToken]['code'], $comparisonOperators)) {
+			return;
+		}
+
+		$nextToken = $phpcsFile->findNext(T_WHITESPACE, ($closeToken + 1), null, true);
+		if (in_array($tokens[$nextToken]['code'], $comparisonOperators)) {
 			return;
 		}
 
