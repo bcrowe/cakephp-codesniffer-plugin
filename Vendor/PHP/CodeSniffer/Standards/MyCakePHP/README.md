@@ -3,6 +3,8 @@
 This code works with [phpcs](http://pear.php.net/manual/en/package.php.php-codesniffer.php)
 and checks code against a modified version of the coding standards used in CakePHP.
 
+NEW: Now it also has auto-fixing for almost all sniffs using the `phpcs-fixer` branch.
+
 ## Installation
 
 ### Usage
@@ -15,11 +17,12 @@ After installation you can check code compliance to the standard using
 ### Changes to the CakePHP one
 
 * Detect Yoda conditions.
-* Added IsNull sniff
-* Added Type casting sniff
-* Added @return doc block sniff
-* Added Ternary (incl. short ternary) sniff
-* Intentation correct (same level as methods and attributes for classes)
+* IsNull sniff
+* TypeCasting sniff
+* @return doc block sniff
+* Ternary (incl. short ternary) sniff
+* DocBlockEnding sniff
+* Indentation correct (same level as methods and attributes for classes)
 * LF on Windows are allowed to be \r\n
 
 ### TODO

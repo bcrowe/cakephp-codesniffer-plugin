@@ -23,6 +23,7 @@
 	<rule ref="CakePHP.Commenting.FunctionCommentThrowTag"/>
 	<rule ref="Generic.Commenting.Todo"/>
 	<rule ref="MyCakePHP.Commenting.ReturnTag"/>
+	<rule ref="MyCakePHP.Commenting.DocBlockEnding"/>
 
 	<rule ref="PEAR.ControlStructures.ControlSignature"/>
 	<rule ref="Squiz.ControlStructures.ForEachLoopDeclaration"/>

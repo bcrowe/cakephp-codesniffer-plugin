@@ -99,10 +99,11 @@ This will create a file `/path/to/file.ext.token` with all token names added in 
 ### MyCakePHP improvements (optional)
 
 * Detect Yoda conditions.
-* Added IsNull sniff
-* Added Type casting sniff
-* Added @return doc block sniff
-* Added Ternary (incl. short ternary) sniff
+* IsNull sniff
+* Type casting sniff
+* @return doc block sniff
+* Ternary (incl. short ternary) sniff
+* DocBlockEnding sniff
 * ReturnEarly sniff to detect if a return statement is followed by an ELSE block.
 * Doc blocks / comments on correct indentation level (as their subsequent code).
 * Line endings on Windows are allowed to be \r\n (default for GIT on Windows for example).
