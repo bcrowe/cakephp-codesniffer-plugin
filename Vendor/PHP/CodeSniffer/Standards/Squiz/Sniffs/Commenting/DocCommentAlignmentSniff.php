@@ -114,13 +114,23 @@ class Squiz_Sniffs_Commenting_DocCommentAlignmentSniff implements PHP_CodeSniffe
                 if (empty($matches) === false) {
                     if (isset($matches[2]) === false) {
                         $error = 'Expected 1 space between asterisk and tag; 0 found';
-                        $phpcsFile->addError($error, $commentPointer, 'NoSpaceBeforeTag');
+                        $fix = $phpcsFile->addFixableError($error, $commentPointer, 'NoSpaceBeforeTag');
+                        if ($fix === true && $phpcsFile->fixer->enabled === true) {
+                            $pos = strpos($content, '*');
+                                $content = substr($content, 0, $pos + 1) . ' ' . substr($content, $pos + 1);
+                            $phpcsFile->fixer->replaceToken($commentPointer, $content);
+                            }
                     } else {
                         $length = strlen($matches[2]);
                         if ($length !== 1) {
                             $error = 'Expected 1 space between asterisk and tag; %s found';
                             $data  = array($length);
-                            $phpcsFile->addError($error, $commentPointer, 'SpaceBeforeTag', $data);
+                            $fix = $phpcsFile->addFixableError($error, $commentPointer, 'SpaceBeforeTag', $data);
+                            if ($fix === true && $phpcsFile->fixer->enabled === true) {
+                                $pos = strpos($content, '*');
+                                $content = substr($content, 0, $pos + 1) . ' ' . ltrim(substr($content, $pos + 1));
+                                $phpcsFile->fixer->replaceToken($commentPointer, $content);
+                            }
                         }
                     }
                 }
@@ -140,7 +150,13 @@ class Squiz_Sniffs_Commenting_DocCommentAlignmentSniff implements PHP_CodeSniffe
                       ($requiredColumn - 1),
                       ($currentColumn - 1),
                      );
-            $phpcsFile->addError($error, $commentPointer, 'SpaceBeforeAsterisk', $data);
+
+            $fix = $phpcsFile->addFixableError($error, $commentPointer, 'SpaceBeforeAsterisk', $data);
+            if ($fix === true && $phpcsFile->fixer->enabled === true) {
+                $pos = strpos($content, '*');
+                $content = substr($content, 0, $pos) . ' ' . substr($content, $pos);
+                $phpcsFile->fixer->replaceToken($commentPointer, $content);
+            }
         }//end foreach
 
     }//end process()
