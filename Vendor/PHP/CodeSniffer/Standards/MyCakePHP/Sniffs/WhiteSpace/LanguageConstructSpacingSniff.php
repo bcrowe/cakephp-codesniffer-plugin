@@ -56,7 +56,7 @@ class MyCakePHP_Sniffs_WhiteSpace_LanguageConstructSpacingSniff implements PHP_C
 			return;
 		}
 
-		$error = 'Language constructs must be followed by parenthesesis.';
+		$error = 'Language constructs must not be followed by parenthesesis.';
 		$phpcsFile->addFixableError($error, $stackPtr, 'IncorrectParenthesis');
 
 		$closingToken = $tokens[$nextToken]['parenthesis_closer'];
