@@ -79,4 +79,3 @@ class CakePHP_Sniffs_WhiteSpace_FunctionClosingBraceSpaceSniff implements PHP_Co
 	}
 
 }
-

@@ -205,6 +205,13 @@ class MyCakePHP_Sniffs_WhiteSpace_ScopeIndentSniff extends CakePHP_Sniffs_WhiteS
 
 				$error = 'Doc blocks must be indented the same than the code that precedes them.';
 
+				$isUnconventionalDocComment = (substr($content, 0, 4) === '/***');
+				if ($isUnconventionalDocComment) {
+					// Abort here better
+					$phpcsFile->addError($error, $firstToken, 'DocCommentStartColumn');
+					continue;
+				}
+
 				$comments = array($firstToken);
 				$currentComment = $firstToken;
 				$lastComment = $firstToken;
@@ -228,10 +235,20 @@ class MyCakePHP_Sniffs_WhiteSpace_ScopeIndentSniff extends CakePHP_Sniffs_WhiteS
 					if ($fix === true && $phpcsFile->fixer->enabled === true) {
 						$tooManyTabs = $column - $indent;
 
-						foreach ($comments as $commentPointer) {
+						foreach ($comments as $key => $commentPointer) {
+							if ($key === 0) {
+								// Replace whitespace before the doc block beginning
+								for ($i = $commentPointer - 1; $i >= $commentPointer - $tooManyTabs; $i--) {
+									$phpcsFile->fixer->replaceToken($i, '');
+								}
+								continue;
+							}
+
+							// Replace whitespace before the asterix
 							$content = $tokens[$commentPointer]['content'];
-							$pos = mb_strpos($content, "\t");
-							$content = mb_substr($content, $pos) . mb_substr($content, $pos + $tooManyTabs);
+							$pos = strpos($content, "*");
+							$content = substr($content, $pos - $tooManyTabs) . substr($content, $pos);
+
 							$phpcsFile->fixer->replaceToken($commentPointer, $content);
 						}
 					}

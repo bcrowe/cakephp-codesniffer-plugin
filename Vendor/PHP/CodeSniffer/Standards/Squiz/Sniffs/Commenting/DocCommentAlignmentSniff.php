@@ -117,7 +117,7 @@ class Squiz_Sniffs_Commenting_DocCommentAlignmentSniff implements PHP_CodeSniffe
                         $fix = $phpcsFile->addFixableError($error, $commentPointer, 'NoSpaceBeforeTag');
                         if ($fix === true && $phpcsFile->fixer->enabled === true) {
                             $pos = strpos($content, '*');
-                                $content = substr($content, 0, $pos + 1) . ' ' . substr($content, $pos + 1);
+                            $content = substr($content, 0, $pos + 1) . ' ' . substr($content, $pos + 1);
                             $phpcsFile->fixer->replaceToken($commentPointer, $content);
                             }
                     } else {
