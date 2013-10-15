@@ -193,28 +193,62 @@ class MyCakePHP_Sniffs_WhiteSpace_ScopeIndentSniff extends CakePHP_Sniffs_WhiteS
 					}
 				}
 
-				if ($isDocComment === true) {
-					// Doc block comments should be indented same than the
-					// code that precedes them.
-					if ($indent !== $column) {
-						$error = 'Doc blocks must be indented the same than the code that precedes them.';
-						$phpcsFile->addError($error, $firstToken, 'DocCommentStartColumn');
-					}
-				} else if ($column !== $indent) {
-					if ($this->exact === true || $column < $indent) {
-						$type  = 'IncorrectExact';
-						$error = 'Line indented incorrectly; expected ';
-						if ($this->exact === false) {
-							$error .= 'at least ';
-							$type = 'Incorrect';
-						}
+				if ($isDocComment !== true) {
+					return;
+				}
 
-						$error .= '%s spaces, found %s';
-						$data = array(
-							($indent - 1),
-							($column - 1),
-						);
-						$phpcsFile->addError($error, $firstToken, $type, $data);
+				// Doc block comments should be indented same than the
+				// code that precedes them.
+				if ($indent === $column) {
+					return;
+				}
+
+				$error = 'Doc blocks must be indented the same than the code that precedes them.';
+
+				$comments = array($firstToken);
+				$currentComment = $firstToken;
+				$lastComment = $firstToken;
+				while (($currentComment = $phpcsFile->findNext(T_DOC_COMMENT, ($currentComment + 1))) !== false) {
+					if ($tokens[$lastComment]['line'] === ($tokens[$currentComment]['line'] - 1)) {
+						$comments[] = $currentComment;
+						$lastComment = $currentComment;
+					} else {
+						break;
+					}
+				}
+
+				if ($indent < $column) {
+					//FIXME
+
+					$phpcsFile->addError($error, $firstToken, 'DocCommentStartColumn');
+					return;
+
+					// Remove some tab(s)
+					$fix = $phpcsFile->addFixableError($error, $firstToken, 'DocCommentStartColumn');
+					if ($fix === true && $phpcsFile->fixer->enabled === true) {
+						$tooManyTabs = $column - $indent;
+
+						foreach ($comments as $commentPointer) {
+							$content = $tokens[$commentPointer]['content'];
+							$pos = mb_strpos($content, "\t");
+							$content = mb_substr($content, $pos) . mb_substr($content, $pos + $tooManyTabs);
+							$phpcsFile->fixer->replaceToken($commentPointer, $content);
+						}
+					}
+
+					return;
+				}
+
+				// Add some tab(s)
+				$fix = $phpcsFile->addFixableError($error, $firstToken, 'DocCommentStartColumn');
+
+				if ($fix === true && $phpcsFile->fixer->enabled === true) {
+					$missingTabs = $indent - $column;
+
+					foreach ($comments as $commentPointer) {
+						$content = $tokens[$commentPointer]['content'];
+						$content = str_repeat("\t", $missingTabs) . $content;
+						$phpcsFile->fixer->replaceToken($commentPointer, $content);
 					}
 				}
 			}
