@@ -18,6 +18,7 @@ After installation you can check code compliance to the standard using
 
 * Detect Yoda conditions.
 * IsNull sniff
+* IsInt/IsWritable sniff
 * TypeCasting sniff
 * @return doc block sniff
 * Ternary (incl. short ternary) sniff
