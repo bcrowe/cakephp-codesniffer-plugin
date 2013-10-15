@@ -194,13 +194,13 @@ class MyCakePHP_Sniffs_WhiteSpace_ScopeIndentSniff extends CakePHP_Sniffs_WhiteS
 				}
 
 				if ($isDocComment !== true) {
-					return;
+					continue;
 				}
 
 				// Doc block comments should be indented same than the
 				// code that precedes them.
 				if ($indent === $column) {
-					return;
+					continue;
 				}
 
 				$error = 'Doc blocks must be indented the same than the code that precedes them.';
@@ -221,7 +221,7 @@ class MyCakePHP_Sniffs_WhiteSpace_ScopeIndentSniff extends CakePHP_Sniffs_WhiteS
 					//FIXME
 
 					$phpcsFile->addError($error, $firstToken, 'DocCommentStartColumn');
-					return;
+					continue;
 
 					// Remove some tab(s)
 					$fix = $phpcsFile->addFixableError($error, $firstToken, 'DocCommentStartColumn');
@@ -236,7 +236,7 @@ class MyCakePHP_Sniffs_WhiteSpace_ScopeIndentSniff extends CakePHP_Sniffs_WhiteS
 						}
 					}
 
-					return;
+					continue;
 				}
 
 				// Add some tab(s)
