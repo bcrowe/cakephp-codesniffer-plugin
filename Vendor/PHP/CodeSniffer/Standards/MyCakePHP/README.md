@@ -23,6 +23,7 @@ After installation you can check code compliance to the standard using
 * @return doc block sniff
 * Ternary (incl. short ternary) sniff
 * DocBlockEnding sniff
+* LanguageConstructSpacing sniff
 * Indentation correct (same level as methods and attributes for classes)
 * LF on Windows are allowed to be \r\n
 
